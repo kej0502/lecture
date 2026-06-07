@@ -171,8 +171,10 @@ export default function NewLecturePage() {
       body: fd,
     });
     if (!res.ok) {
-      const b = await res.json().catch(() => ({}));
-      throw new Error(b.error ?? "자료 업로드 실패");
+      const detail = await res.text().catch(() => "");
+      throw new Error(
+        `${kind} 업로드 실패 (HTTP ${res.status}) ${detail.slice(0, 200)}`,
+      );
     }
   }
 
@@ -190,8 +192,10 @@ export default function NewLecturePage() {
       body: JSON.stringify({ kind, filename, extractedText, meta }),
     });
     if (!res.ok) {
-      const b = await res.json().catch(() => ({}));
-      throw new Error(b.error ?? "자료 업로드 실패");
+      const detail = await res.text().catch(() => "");
+      throw new Error(
+        `${kind} 업로드 실패 (HTTP ${res.status}) ${detail.slice(0, 200)}`,
+      );
     }
   }
 
