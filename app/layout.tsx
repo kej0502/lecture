@@ -27,6 +27,12 @@ export default function RootLayout({
               새 평가
             </Link>
             <Link
+              href="/rubric"
+              className="text-sm text-slate-600 hover:text-slate-900"
+            >
+              평가기준
+            </Link>
+            <Link
               href="/curriculum"
               className="text-sm text-slate-600 hover:text-slate-900"
             >
