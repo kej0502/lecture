@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseSubtitle } from "@/lib/extract/srt";
+import { stripControlChars } from "@/lib/extract/types";
 
 // pdf-parse(DOMMatrix 의존)는 모듈 로드만으로 서버리스에서 크래시 → PDF 분기에서만 지연 import.
 
@@ -30,7 +31,9 @@ export async function POST(
         lectureId: id,
         kind,
         filename: String(body.filename ?? "uploaded"),
-        extractedText: body.extractedText ? String(body.extractedText) : null,
+        extractedText: body.extractedText
+          ? stripControlChars(String(body.extractedText))
+          : null,
         meta: JSON.stringify(body.meta ?? {}),
       },
     });
@@ -84,7 +87,7 @@ export async function POST(
       lectureId: id,
       kind,
       filename,
-      extractedText,
+      extractedText: extractedText ? stripControlChars(extractedText) : null,
       meta: JSON.stringify(meta),
     },
   });
