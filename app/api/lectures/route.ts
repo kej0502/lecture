@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     where.instructor = { contains: instructor, mode: "insensitive" };
   if (area) where.subject = { contains: area, mode: "insensitive" };
 
+  // 목록엔 최신 평가 1건 + 점수의 필요한 필드만 — 전체 평가/점수 로드 방지(속도 개선).
   const lectures = await prisma.lecture.findMany({
     where,
     orderBy: [
@@ -27,10 +28,24 @@ export async function GET(req: Request) {
       { instructor: "asc" }, // 강사명
       { createdAt: "desc" },
     ],
-    include: {
+    select: {
+      id: true,
+      title: true,
+      subject: true,
+      instructor: true,
+      platform: true,
+      grade: true,
+      targetGrade: true,
+      createdAt: true,
+      _count: { select: { evaluations: true } },
       evaluations: {
         orderBy: { createdAt: "desc" },
-        include: { scores: true },
+        take: 1,
+        select: {
+          evaluatorName: true,
+          createdAt: true,
+          scores: { select: { category: true, dimension: true, value: true } },
+        },
       },
     },
   });
@@ -55,7 +70,7 @@ export async function GET(req: Request) {
       grade: l.grade,
       targetGrade: l.targetGrade,
       createdAt: l.createdAt,
-      evaluationCount: l.evaluations.length,
+      evaluationCount: l._count.evaluations,
       evaluatorName: latestEval?.evaluatorName ?? null,
       evaluatedAt: latestEval?.createdAt ?? null,
       ai,
