@@ -12,7 +12,8 @@ import {
 } from "@/lib/rubric";
 import type { AnalysisResult, AnalyzeInput, LectureAnalyzer } from "./types";
 
-const MODEL = "claude-opus-4-8";
+// 기본은 최상위 Opus. 비용 절감 시 ANTHROPIC_MODEL로 교체(예: claude-haiku-4-5).
+const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8";
 
 interface ClaudeDim {
   dimension: Dimension;
