@@ -97,7 +97,10 @@ export async function POST(
     runningTimeSec: lecture.runningTimeSec,
   };
 
-  const analyzer = getAnalyzer();
+  // 사용자별 Claude 키/모델 — 브라우저가 헤더로 전달(서버에 저장/로그하지 않음)
+  const userKey = req.headers.get("x-anthropic-api-key")?.trim() || undefined;
+  const userModel = req.headers.get("x-anthropic-model")?.trim() || undefined;
+  const analyzer = getAnalyzer({ apiKey: userKey, model: userModel });
   let result;
   try {
     result = await analyzer.analyze(input);

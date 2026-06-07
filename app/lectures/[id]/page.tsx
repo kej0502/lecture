@@ -24,6 +24,23 @@ export default function LectureDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [evaluator, setEvaluator] = useState("");
+  // 사용자별 Claude 키/모델 (브라우저에만 저장, 서버 전송은 분석 시 헤더로만)
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("claude-opus-4-8");
+
+  useEffect(() => {
+    setApiKey(localStorage.getItem("anthropic_api_key") ?? "");
+    setModel(localStorage.getItem("anthropic_model") ?? "claude-opus-4-8");
+  }, []);
+
+  function saveKey(v: string) {
+    setApiKey(v);
+    localStorage.setItem("anthropic_api_key", v);
+  }
+  function saveModel(v: string) {
+    setModel(v);
+    localStorage.setItem("anthropic_model", v);
+  }
 
   const reload = useCallback(async () => {
     const data = await api<LectureDTO>(`/api/lectures/${id}`);
@@ -44,9 +61,16 @@ export default function LectureDetailPage() {
     setAnalyzing(true);
     setError(null);
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (apiKey.trim()) {
+        headers["x-anthropic-api-key"] = apiKey.trim();
+        headers["x-anthropic-model"] = model;
+      }
       await api(`/api/lectures/${id}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ evaluatorName: evaluator }),
       });
       await reload();
@@ -151,9 +175,59 @@ export default function LectureDetailPage() {
       <Card className="space-y-3">
         <h2 className="text-lg font-semibold">AI 자동 평가</h2>
         <p className="text-sm text-slate-500">
-          자막(+교재)을 객관 지표로 분석해 8개 항목을 채점하고, 각 항목의 평가 근거(자막 구간·타임)를
+          자막(+교재)을 분석해 8개 항목을 채점하고, 각 항목의 평가 근거(자막 구간·타임)를
           함께 제시합니다.
         </p>
+
+        {/* 내 Claude 키 — 각자 자기 계정으로 분석 */}
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+          <p className="text-sm font-medium">내 Claude 키 (선택)</p>
+          <p className="text-xs text-slate-400">
+            본인 Anthropic API 키를 넣으면 <b>내 계정으로 실제 AI 분석</b>을 합니다. 키는 이
+            브라우저에만 저장되며 서버에 보관하지 않습니다.{" "}
+            <a
+              href="https://console.anthropic.com/settings/keys"
+              target="_blank"
+              rel="noreferrer"
+              className="text-indigo-600 hover:underline"
+            >
+              키 발급 ↗
+            </a>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="password"
+              className="w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="sk-ant-..."
+              value={apiKey}
+              onChange={(e) => saveKey(e.target.value)}
+              autoComplete="off"
+            />
+            <select
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={model}
+              onChange={(e) => saveModel(e.target.value)}
+            >
+              <option value="claude-opus-4-8">Opus 4.8 (최고 품질)</option>
+              <option value="claude-sonnet-4-6">Sonnet 4.6 (균형)</option>
+              <option value="claude-haiku-4-5">Haiku 4.5 (저렴)</option>
+            </select>
+            {apiKey && (
+              <button
+                onClick={() => saveKey("")}
+                className="text-xs text-slate-400 hover:text-red-600"
+              >
+                키 삭제
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">
+            {apiKey.trim()
+              ? "✅ 내 키로 실제 Claude 분석을 실행합니다."
+              : "키 미입력 시 기본(지표 기반) 분석으로 실행됩니다."}
+          </p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <input
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"

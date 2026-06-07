@@ -12,8 +12,8 @@ import {
 } from "@/lib/rubric";
 import type { AnalysisResult, AnalyzeInput, LectureAnalyzer } from "./types";
 
-// 기본은 최상위 Opus. 비용 절감 시 ANTHROPIC_MODEL로 교체(예: claude-haiku-4-5).
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8";
+// 기본은 최상위 Opus. 비용 절감 시 ANTHROPIC_MODEL(또는 사용자 지정 모델)로 교체.
+const DEFAULT_MODEL = "claude-opus-4-8";
 
 interface ClaudeDim {
   dimension: Dimension;
@@ -26,13 +26,20 @@ interface ClaudeDim {
 export class ClaudeAnalyzer implements LectureAnalyzer {
   readonly provider = "claude";
 
+  // apiKey/model을 인자로 받으면 우선 사용(사용자별 키), 없으면 환경변수로 폴백.
+  constructor(
+    private readonly apiKey?: string,
+    private readonly model?: string,
+  ) {}
+
   async analyze(input: AnalyzeInput): Promise<AnalysisResult> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = this.apiKey ?? process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new Error(
-        "ANTHROPIC_API_KEY가 설정되지 않았습니다. AI_PROVIDER=claude로 쓰려면 키가 필요합니다.",
+        "Claude API 키가 없습니다. 화면에서 본인 키를 입력하거나 서버에 ANTHROPIC_API_KEY를 설정하세요.",
       );
     }
+    const model = this.model ?? process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL;
     const client = new Anthropic({ apiKey });
 
     const rubricText = DIMENSIONS.map(
@@ -105,7 +112,7 @@ export class ClaudeAnalyzer implements LectureAnalyzer {
     };
 
     const res = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 16000,
       thinking: { type: "adaptive" },
       system,
