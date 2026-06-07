@@ -2,10 +2,10 @@
 // 실행: npm run db:seed  (tsx prisma/seed.ts)
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 
-const adapter = new PrismaNeon({
+const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
