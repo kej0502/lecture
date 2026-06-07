@@ -25,12 +25,11 @@ interface LectureListItem {
 export default function DashboardPage() {
   const router = useRouter();
   const [lectures, setLectures] = useState<LectureListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [instructor, setInstructor] = useState("");
   const [area, setArea] = useState("");
-
-  const CACHE_KEY = "dashboard_cache";
+  const [touched, setTouched] = useState(false); // 한 번이라도 DB를 조회했는지
 
   function load(filters?: { instructor?: string; area?: string }) {
     const params = new URLSearchParams();
@@ -41,37 +40,21 @@ export default function DashboardPage() {
     const qs = params.toString();
     setLoading(true);
     setError(null);
+    setTouched(true);
     api<LectureListItem[]>(`/api/lectures${qs ? `?${qs}` : ""}`)
-      .then((data) => {
-        setLectures(data);
-        // 검색 필터 없는 기본 목록만 캐시(재방문 시 즉시 표시)
-        if (!ins.trim() && !ar.trim()) {
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-          } catch {
-            /* ignore */
-          }
-        }
-      })
+      .then(setLectures)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }
 
-  // 마운트 시 캐시된 목록을 즉시 표시(스피너 없이) → 뒤에서 최신으로 갱신
+  // 검색어가 있을 때만 DB 조회. 비어 있으면 목록을 비워두고 호출하지 않음.
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        setLectures(JSON.parse(cached));
-        setLoading(false);
-      }
-    } catch {
-      /* ignore */
+    if (!instructor.trim() && !area.trim()) {
+      setLectures([]);
+      setTouched(false);
+      setLoading(false);
+      return;
     }
-  }, []);
-
-  // 영역 변경 시 즉시 검색, 강사명은 입력 디바운스(300ms)
-  useEffect(() => {
     const t = setTimeout(() => load(), 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,6 +120,12 @@ export default function DashboardPage() {
             초기화
           </button>
         )}
+        <button
+          onClick={() => load({ instructor: "", area: "" })}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          전체 보기
+        </button>
       </div>
 
       {loading && lectures.length === 0 && (
@@ -147,19 +136,36 @@ export default function DashboardPage() {
       )}
       {error && <p className="text-red-600">{error}</p>}
 
-      {!loading && lectures.length === 0 && (instructor || area) && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-slate-500">
-          검색 결과가 없습니다.
+      {/* 기본 화면: 조회 전 — 목록을 바로 부르지 않고 안내만 표시 */}
+      {!loading && !touched && lectures.length === 0 && (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          강사명·영역으로 <b>검색</b>하면 결과를 보여줍니다.
+          <br />
+          전체 강의를 보려면{" "}
+          <button
+            onClick={() => load({ instructor: "", area: "" })}
+            className="font-medium text-slate-900 underline"
+          >
+            전체 보기
+          </button>
+          를 누르세요.
         </div>
       )}
 
-      {!loading && lectures.length === 0 && !instructor && !area && (
+      {/* 조회했지만 결과 없음 */}
+      {!loading && touched && lectures.length === 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 text-slate-500">
-          아직 평가한 강의가 없습니다.{" "}
-          <Link href="/new" className="text-slate-900 underline">
-            첫 강의를 등록
-          </Link>
-          해 보세요.
+          {instructor || area ? (
+            "검색 결과가 없습니다."
+          ) : (
+            <>
+              아직 평가한 강의가 없습니다.{" "}
+              <Link href="/new" className="text-slate-900 underline">
+                첫 강의를 등록
+              </Link>
+              해 보세요.
+            </>
+          )}
         </div>
       )}
 
