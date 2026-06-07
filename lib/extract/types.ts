@@ -15,4 +15,8 @@ export interface PdfDoc {
   text: string;
   pages: number;
   charCount: number;
+  truncated?: boolean; // 분석용으로 길이를 잘랐는지
 }
+
+// 분석에 사용할 PDF 텍스트 최대 길이(전송 본문 4.5MB 제한·분석 효율 고려).
+export const PDF_TEXT_MAX = 500_000;

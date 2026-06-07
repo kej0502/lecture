@@ -86,6 +86,7 @@ export default function NewLecturePage() {
     text: string;
     pages: number;
     charCount: number;
+    truncated?: boolean;
   } | null>(null);
   const [pdfStatus, setPdfStatus] = useState<
     "" | "extracting" | "ok" | "empty" | "error"
@@ -354,6 +355,12 @@ export default function NewLecturePage() {
             <p className="text-xs text-green-600">
               ✅ 교재 텍스트 {pdfDoc.charCount.toLocaleString()}자 추출됨 (
               {pdfDoc.pages}p)
+              {pdfDoc.truncated && (
+                <span className="text-amber-600">
+                  {" "}
+                  · 분량이 커서 앞부분만 분석에 사용합니다
+                </span>
+              )}
             </p>
           )}
           {pdfStatus === "empty" && (
