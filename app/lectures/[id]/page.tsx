@@ -297,7 +297,8 @@ export default function LectureDetailPage() {
           <button
             onClick={runAnalyze}
             disabled={analyzing}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            style={{ color: "#fff" }}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
           >
             {analyzing ? "분석 중…" : aiEv ? "다시 평가" : "AI 평가 실행"}
           </button>

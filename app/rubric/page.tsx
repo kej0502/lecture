@@ -69,8 +69,8 @@ export default function RubricPage() {
           {BANDS.map((b) => (
             <span
               key={b.grade}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-white"
-              style={{ backgroundColor: gradeColor(b.min) }}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+              style={{ backgroundColor: gradeColor(b.min), color: "#fff" }}
             >
               {b.grade} · {b.label}
               <span className="opacity-80">({b.min}점 이상)</span>

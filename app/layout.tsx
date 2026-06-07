@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "AI 자동 분석 + 사람 루브릭 채점으로 고등 온라인 강의를 평가합니다.",
 };
 
+const navCls =
+  "text-xs uppercase tracking-wider text-slate-400 transition-colors hover:text-slate-900";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -14,33 +17,50 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        <header className="border-b border-slate-200 bg-white">
-          <nav className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">
-            <Link href="/" className="font-bold text-lg">
-              📚 강의 평가
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col">
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#090d12]/80 backdrop-blur-md">
+          <nav className="mx-auto flex max-w-5xl items-center gap-7 px-4 py-4">
+            <Link
+              href="/"
+              className="font-display text-base font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              강의 평가<span className="text-slate-500">.eval</span>
             </Link>
-            <Link href="/" className="text-sm text-slate-600 hover:text-slate-900">
+            <Link href="/" className={navCls}>
               대시보드
             </Link>
-            <Link href="/new" className="text-sm text-slate-600 hover:text-slate-900">
+            <Link href="/new" className={navCls}>
               새 평가
             </Link>
-            <Link
-              href="/rubric"
-              className="text-sm text-slate-600 hover:text-slate-900"
-            >
+            <Link href="/rubric" className={navCls}>
               평가기준
             </Link>
-            <Link
-              href="/curriculum"
-              className="text-sm text-slate-600 hover:text-slate-900"
-            >
-              교육과정 관리
+            <Link href="/curriculum" className={navCls}>
+              교육과정
             </Link>
           </nav>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+          {children}
+        </main>
+        <footer className="border-t border-white/10 px-4 py-6">
+          <p className="mx-auto max-w-5xl text-xs text-slate-500">
+            고등 온라인 강의 평가 · AI + 루브릭
+          </p>
+        </footer>
       </body>
     </html>
   );

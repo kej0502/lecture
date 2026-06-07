@@ -26,8 +26,8 @@ export function ScoreBadge({
   const band = toBand(value);
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-      style={{ backgroundColor: gradeColor(value) }}
+      className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+      style={{ backgroundColor: gradeColor(value), color: "#fff" }}
     >
       {label ? `${label} ` : ""}
       {value}점 · {band.grade}

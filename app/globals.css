@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
+/* SOHub 풍 다크 테마: 딥 네이비 배경 + 오프화이트, 초고대비 미니멀.
+   Tailwind 색 토큰(white/slate)을 재정의해 페이지 클래스 수정 없이 전체를 다크로 전환. */
+@theme {
+  --color-white: #11171f; /* 카드·입력 등 표면(배경보다 살짝 밝게) */
+  --color-slate-50: #131a22;
+  --color-slate-100: #161e26;
+  --color-slate-200: #232d37; /* 경계선 */
+  --color-slate-300: #38434f; /* 입력 경계선 */
+  --color-slate-400: #6b7886; /* 흐린 텍스트 */
+  --color-slate-500: #8b97a3; /* 보조 텍스트 */
+  --color-slate-600: #a7b1bb;
+  --color-slate-700: #c4ccd3;
+  --color-slate-800: #e3e8ec;
+  --color-slate-900: #f0f6f8; /* 주요 텍스트 + 라이트 버튼 배경 */
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #090d12;
+  color: #f0f6f8;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 큰 볼드 디스플레이 타이포 */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+h1 {
+  letter-spacing: -0.03em;
+}
+
+::selection {
+  background: #f0f6f8;
+  color: #090d12;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3540;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #38434f;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
