@@ -83,13 +83,14 @@ export default function NewLecturePage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // 파일명에서 플랫폼·영역·강사명·제목 자동 채움(비어 있는 칸만)
+  // 파일명에서 플랫폼·영역·강사명·강의명 자동 채움(비어 있는 칸만)
+  // 구조화된 규칙 "플랫폼_영역_강사명_강의명"이면 위치 기반으로 강의명까지 분리.
   function applyParse(filename: string) {
     const meta = parseLectureMeta(filename);
     const base = filename.replace(/\.[^.]+$/, "");
     setForm((f) => ({
       ...f,
-      title: f.title || base,
+      title: f.title || meta.title || base,
       area: f.area || meta.area || "",
       platform: f.platform || meta.platform || "",
       instructor: f.instructor || meta.instructor || "",
@@ -181,7 +182,9 @@ export default function NewLecturePage() {
           <div>
             <h2 className="font-semibold">1. 자료 업로드</h2>
             <p className="text-xs text-slate-400">
-              파일을 올리면 파일명에서 플랫폼·영역·강사명을 자동으로 채워줍니다. (아래에서 수정 가능)
+              파일을 올리면 파일명에서 플랫폼·영역·강사명·강의명을 자동으로 채워줍니다.
+              <br />
+              예: <code>플랫폼_영역_강사명_강의명</code> (예: 메가스터디_수학_임재석_삼차방정식) — 아래에서 수정 가능
             </p>
           </div>
           <UploadBox
