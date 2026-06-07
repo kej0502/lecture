@@ -44,7 +44,7 @@ export default function RubricPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">평가기준</h1>
+        <h1 className="text-3xl font-bold tracking-tight">평가기준</h1>
         <p className="mt-1 text-sm text-slate-500">
           강의는 <b>강의력</b>과 <b>콘텐츠</b> 2개 대분류, 각 4개 항목으로 0~100점
           채점됩니다. 아래 가중치로 합산해 총점을 산출합니다.
@@ -64,7 +64,7 @@ export default function RubricPage() {
 
       {/* 등급 밴드 */}
       <Card className="space-y-3">
-        <h2 className="text-lg font-semibold">등급 기준</h2>
+        <h2 className="text-xl font-semibold">등급 기준</h2>
         <div className="flex flex-wrap gap-2">
           {BANDS.map((b) => (
             <span
@@ -83,7 +83,7 @@ export default function RubricPage() {
       {CATEGORIES.map((cat) => (
         <Card key={cat} className="space-y-4">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">{CATEGORY_LABEL[cat]}</h2>
+            <h2 className="text-xl font-semibold">{CATEGORY_LABEL[cat]}</h2>
             <span className="text-sm text-slate-500">
               총점 비중 {pct(CATEGORY_WEIGHT[cat])}
             </span>
@@ -110,7 +110,7 @@ export default function RubricPage() {
 
       {/* 세부 채점 기준값 */}
       <Card className="space-y-3">
-        <h2 className="text-lg font-semibold">세부 채점 기준값</h2>
+        <h2 className="text-xl font-semibold">세부 채점 기준값</h2>
         <p className="text-sm text-slate-500">
           자동 채점에 쓰이는 적정 범위·목표치입니다. (자막 타임스탬프·텍스트 기반)
         </p>

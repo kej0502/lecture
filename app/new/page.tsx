@@ -222,12 +222,12 @@ export default function NewLecturePage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">새 강의 등록</h1>
+      <h1 className="text-3xl font-bold tracking-tight">새 강의 등록</h1>
       <form onSubmit={onSubmit} className="space-y-5">
         {/* 1. 자료 업로드 (먼저) */}
         <Card className="space-y-3">
           <div>
-            <h2 className="font-semibold">1. 자료 업로드</h2>
+            <h2 className="text-lg font-semibold">1. 자료 업로드</h2>
             <p className="text-xs text-slate-400">
               파일을 올리면 파일명에서 플랫폼·영역·강사명·강의명을 자동으로 채워줍니다.
               <br />
@@ -279,7 +279,7 @@ export default function NewLecturePage() {
 
         {/* 2. 강의 정보 */}
         <Card className="space-y-4">
-          <h2 className="font-semibold">2. 강의 정보</h2>
+          <h2 className="text-lg font-semibold">2. 강의 정보</h2>
           <div>
             <label className={labelCls}>강의명 *</label>
             <input

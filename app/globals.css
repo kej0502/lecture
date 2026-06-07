@@ -5,15 +5,15 @@
 @theme {
   --color-white: #11171f; /* 카드·입력 등 표면(배경보다 살짝 밝게) */
   --color-slate-50: #131a22;
-  --color-slate-100: #161e26;
-  --color-slate-200: #232d37; /* 경계선 */
-  --color-slate-300: #38434f; /* 입력 경계선 */
-  --color-slate-400: #6b7886; /* 흐린 텍스트 */
-  --color-slate-500: #8b97a3; /* 보조 텍스트 */
-  --color-slate-600: #a7b1bb;
-  --color-slate-700: #c4ccd3;
-  --color-slate-800: #e3e8ec;
-  --color-slate-900: #f0f6f8; /* 주요 텍스트 + 라이트 버튼 배경 */
+  --color-slate-100: #18222b;
+  --color-slate-200: #2b3742; /* 경계선(또렷하게) */
+  --color-slate-300: #3d4a57; /* 입력 경계선 */
+  --color-slate-400: #929eaa; /* 흐린 텍스트(밝힘) */
+  --color-slate-500: #aab4bf; /* 보조 텍스트(밝힘) */
+  --color-slate-600: #c2cad2;
+  --color-slate-700: #d4dae0;
+  --color-slate-800: #e6eaee;
+  --color-slate-900: #f4f8fa; /* 주요 텍스트 + 라이트 버튼 배경 */
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-display: "Space Grotesk", "Inter", sans-serif;
