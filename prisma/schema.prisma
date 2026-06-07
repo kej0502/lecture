@@ -1,0 +1,90 @@
+// 고등 온라인 강의 평가 툴 — Prisma schema
+// SQLite는 enum을 지원하지 않으므로 category/dimension/type 등은 String + lib/rubric.ts 상수로 검증한다.
+// datasource provider/url은 prisma.config.ts(DATABASE_URL)로 분리 → 추후 Postgres 전환 용이.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Lecture {
+  id                 String   @id @default(cuid())
+  title              String
+  subject            String // 과목/영역 (예: 수학Ⅰ)
+  instructor         String? // 강사명
+  platform           String? // 강의 플랫폼 (메가스터디/대성마이맥/이투스/시대인재/기타)
+  grade              String? // 학년 표기(자유)
+  targetGrade        String? // 대상 학년 다중선택 콤마 결합 (예: "고2,고3,n수")
+  targetLevel        String? // 대상 등급대: HIGH(상)/MID(중)/LOW(하)
+  runningTimeSec     Int? // 차시 길이(초)
+  curriculumRevision Int? // 적용 교육과정 개정연도 (예: 2022)
+  sourceType         String   @default("FILE") // URL | FILE
+  sourceUrl          String?
+  createdAt          DateTime @default(now())
+
+  assets      Asset[]
+  evaluations Evaluation[]
+}
+
+model Asset {
+  id            String   @id @default(cuid())
+  lectureId     String
+  kind          String // SUBTITLE | PDF | VIDEO | SCRIPT
+  filename      String
+  extractedText String? // 추출된 평문 텍스트
+  meta          String? // JSON 문자열 (세그먼트/페이지/지표 등)
+  createdAt     DateTime @default(now())
+
+  lecture Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+  @@index([lectureId])
+}
+
+model Evaluation {
+  id            String   @id @default(cuid())
+  lectureId     String
+  type          String // AI | HUMAN
+  evaluatorName String?
+  summary       String?
+  createdAt     DateTime @default(now())
+
+  lecture Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  scores  Score[]
+
+  @@index([lectureId])
+}
+
+model Score {
+  id           String  @id @default(cuid())
+  evaluationId String
+  category     String // TEACHING | CONTENT
+  dimension    String // DELIVERY | ENGAGEMENT | PACING | PRESENTATION | ACCURACY | CURRICULUM | DIFFICULTY | READABILITY
+  value        Float // 0~100
+  comment      String? // 채점 결과 요약(지표 기반)
+  qualitative  String? // 정성 평가 서술
+  explain      String? // 평가 항목 설명(무엇을 보는지)
+  evidence     String? // 근거 JSON [{time,text,reason}]
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@index([evaluationId])
+}
+
+model CurriculumStandard {
+  id           String   @id @default(cuid())
+  subject      String // 과목
+  revisionYear Int // 개정연도 (2015 / 2022)
+  unit         String? // 단원
+  code         String // 성취기준 코드 (예: 12수학Ⅰ-01-02)
+  statement    String // 성취기준 내용
+  keywords     String // JSON 배열 문자열 — 강의 텍스트 매칭용 키워드
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([subject, revisionYear, code])
+  @@index([subject, revisionYear])
+}
