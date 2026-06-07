@@ -1,50 +1,51 @@
 @import "tailwindcss";
 
-/* SOHub 풍 다크 테마: 딥 네이비 배경 + 오프화이트, 초고대비 미니멀.
-   Tailwind 색 토큰(white/slate)을 재정의해 페이지 클래스 수정 없이 전체를 다크로 전환. */
+/* Vocabulary 앱 풍: 아이보리 배경 + 먹색 대형 세리프 + 넉넉한 여백, 차분한 에디토리얼.
+   Tailwind 색 토큰(white/slate)을 라이트 톤으로 재정의해 페이지 수정 없이 전체 적용. */
 @theme {
-  --color-white: #11171f; /* 카드·입력 등 표면(배경보다 살짝 밝게) */
-  --color-slate-50: #131a22;
-  --color-slate-100: #18222b;
-  --color-slate-200: #2b3742; /* 경계선(또렷하게) */
-  --color-slate-300: #3d4a57; /* 입력 경계선 */
-  --color-slate-400: #929eaa; /* 흐린 텍스트(밝힘) */
-  --color-slate-500: #aab4bf; /* 보조 텍스트(밝힘) */
-  --color-slate-600: #c2cad2;
-  --color-slate-700: #d4dae0;
-  --color-slate-800: #e6eaee;
-  --color-slate-900: #f4f8fa; /* 주요 텍스트 + 라이트 버튼 배경 */
+  --color-white: #ffffff; /* 카드·입력 표면 */
+  --color-slate-50: #f3efe6;
+  --color-slate-100: #eee9de;
+  --color-slate-200: #e4dece; /* 얇은 구분선(hairline) */
+  --color-slate-300: #d6cfbd; /* 입력 경계선 */
+  --color-slate-400: #9a948a; /* 흐린 텍스트 */
+  --color-slate-500: #6b6b6b; /* 본문 회색 */
+  --color-slate-600: #565350;
+  --color-slate-700: #3a3733;
+  --color-slate-800: #262320;
+  --color-slate-900: #1a1a1a; /* 제목 먹색 + 다크 버튼 */
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background: #090d12;
-  color: #f0f6f8;
+  background: #f7f5f0;
+  color: #1a1a1a;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* 큰 볼드 디스플레이 타이포 */
+/* 대형 세리프 디스플레이 타이포 */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 h1 {
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 ::selection {
-  background: #f0f6f8;
-  color: #090d12;
+  background: #1a1a1a;
+  color: #f7f5f0;
 }
 
 ::-webkit-scrollbar {
@@ -52,11 +53,11 @@ h1 {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3540;
+  background: #d6cfbd;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #38434f;
+  background: #c4bba6;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

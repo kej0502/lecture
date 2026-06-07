@@ -25,19 +25,19 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#090d12]/80 backdrop-blur-md">
+        <header className="sticky top-0 z-20 border-b border-black/10 bg-[#f7f5f0]/85 backdrop-blur-md">
           <nav className="mx-auto flex max-w-5xl items-center gap-7 px-4 py-4">
             <Link
               href="/"
-              className="font-display text-base font-bold tracking-tight"
+              className="text-lg font-semibold tracking-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              강의 평가<span className="text-slate-500">.eval</span>
+              강의 평가<span className="text-slate-400">.eval</span>
             </Link>
             <Link href="/" className={navCls}>
               대시보드
@@ -56,7 +56,7 @@ export default function RootLayout({
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
           {children}
         </main>
-        <footer className="border-t border-white/10 px-4 py-6">
+        <footer className="border-t border-black/10 px-4 py-6">
           <p className="mx-auto max-w-5xl text-xs text-slate-500">
             고등 온라인 강의 평가 · AI + 루브릭
           </p>
