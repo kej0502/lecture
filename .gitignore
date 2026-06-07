@@ -48,3 +48,5 @@ next-env.d.ts
 /dev.db-journal
 *.db
 *.db-journal
+
+.vercel

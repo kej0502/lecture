@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "pg",
     "@prisma/adapter-pg",
-    "pdf-parse",
+    "unpdf",
     "@react-pdf/renderer",
   ],
 };

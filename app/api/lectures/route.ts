@@ -22,7 +22,11 @@ export async function GET(req: Request) {
 
   const lectures = await prisma.lecture.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy: [
+      { subject: "asc" }, // 영역
+      { instructor: "asc" }, // 강사명
+      { createdAt: "desc" },
+    ],
     include: {
       evaluations: {
         orderBy: { createdAt: "desc" },

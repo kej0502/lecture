@@ -66,7 +66,7 @@ export default function NewLecturePage() {
     area: "",
     instructor: "",
     platform: "",
-    targetLevel: "MID",
+    targetLevel: "", // 기본 미선택
     runningTimeMin: "",
     curriculumRevision: "2022",
     sourceUrl: "",
@@ -74,6 +74,7 @@ export default function NewLecturePage() {
   const [grades, setGrades] = useState<string[]>([]);
   const [gradeEtc, setGradeEtc] = useState(false);
   const [gradeEtcText, setGradeEtcText] = useState("");
+  const [levelEtcText, setLevelEtcText] = useState(""); // 대상 등급대 기타(직접입력)
 
   const [subtitle, setSubtitle] = useState<File | null>(null);
   const [pdf, setPdf] = useState<File | null>(null);
@@ -83,17 +84,18 @@ export default function NewLecturePage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // 파일명에서 플랫폼·영역·강사명·강의명 자동 채움(비어 있는 칸만)
+  // 파일명에서 플랫폼·영역·강사명·강의명 자동 채움.
+  // 새 파일을 올리면 이전에 자동 채운 4개 칸을 새 파일 기준으로 리셋·재설정한다.
   // 구조화된 규칙 "플랫폼_영역_강사명_강의명"이면 위치 기반으로 강의명까지 분리.
   function applyParse(filename: string) {
     const meta = parseLectureMeta(filename);
     const base = filename.replace(/\.[^.]+$/, "");
     setForm((f) => ({
       ...f,
-      title: f.title || meta.title || base,
-      area: f.area || meta.area || "",
-      platform: f.platform || meta.platform || "",
-      instructor: f.instructor || meta.instructor || "",
+      title: meta.title || base,
+      area: meta.area || "",
+      platform: meta.platform || "",
+      instructor: meta.instructor || "",
     }));
   }
 
@@ -144,6 +146,12 @@ export default function NewLecturePage() {
     const allGrades = [...grades];
     if (gradeEtc && gradeEtcText.trim()) allGrades.push(gradeEtcText.trim());
 
+    // 대상 등급대: 미선택→null, 기타→직접입력값
+    const targetLevel =
+      form.targetLevel === "ETC"
+        ? levelEtcText.trim() || null
+        : form.targetLevel || null;
+
     setBusy(true);
     try {
       const lecture = await api<{ id: string }>("/api/lectures", {
@@ -155,7 +163,7 @@ export default function NewLecturePage() {
           instructor: form.instructor || null,
           platform: form.platform || null,
           targetGrade: allGrades.join(","),
-          targetLevel: form.targetLevel,
+          targetLevel,
           runningTimeSec: form.runningTimeMin
             ? Math.round(Number(form.runningTimeMin) * 60)
             : null,
@@ -314,10 +322,20 @@ export default function NewLecturePage() {
                 value={form.targetLevel}
                 onChange={(e) => set("targetLevel", e.target.value)}
               >
+                <option value="">선택</option>
                 <option value="HIGH">상위권</option>
                 <option value="MID">중위권</option>
                 <option value="LOW">하위권</option>
+                <option value="ETC">기타(직접입력)</option>
               </select>
+              {form.targetLevel === "ETC" && (
+                <input
+                  className={`${inputCls} mt-2`}
+                  placeholder="예: 최상위권 / 의대반"
+                  value={levelEtcText}
+                  onChange={(e) => setLevelEtcText(e.target.value)}
+                />
+              )}
             </div>
             <div>
               <label className={labelCls}>강의 길이(분, 선택)</label>
