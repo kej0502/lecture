@@ -97,10 +97,15 @@ export async function POST(
     runningTimeSec: lecture.runningTimeSec,
   };
 
-  // 사용자별 Claude 키/모델 — 브라우저가 헤더로 전달(서버에 저장/로그하지 않음)
-  const userKey = req.headers.get("x-anthropic-api-key")?.trim() || undefined;
-  const userModel = req.headers.get("x-anthropic-model")?.trim() || undefined;
-  const analyzer = getAnalyzer({ apiKey: userKey, model: userModel });
+  // 사용자별 AI 제공자/키/모델 — 브라우저가 헤더로 전달(서버에 저장/로그하지 않음)
+  const userProvider = req.headers.get("x-ai-provider")?.trim() || undefined;
+  const userKey = req.headers.get("x-ai-api-key")?.trim() || undefined;
+  const userModel = req.headers.get("x-ai-model")?.trim() || undefined;
+  const analyzer = getAnalyzer({
+    provider: userKey ? userProvider : undefined,
+    apiKey: userKey,
+    model: userModel,
+  });
   let result;
   try {
     result = await analyzer.analyze(input);
