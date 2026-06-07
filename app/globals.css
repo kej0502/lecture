@@ -15,8 +15,10 @@
   --color-slate-800: #262320;
   --color-slate-900: #1a1a1a; /* 제목 먹색 + 다크 버튼 */
 
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans:
+    "Pretendard Variable", Pretendard, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-display: var(--font-sans);
 }
 
 :root {
@@ -31,16 +33,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 대형 세리프 디스플레이 타이포 */
+/* 제목: 굵고 또렷한 산세리프 + 좁은 자간(전문적·가독성) */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 h1 {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 ::selection {
