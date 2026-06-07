@@ -81,6 +81,15 @@ export default function NewLecturePage() {
   const [subtitleText, setSubtitleText] = useState(""); // 자막 텍스트 직접 입력(타임스탬프 포함 가능)
   const [pdf, setPdf] = useState<File | null>(null);
   const [video, setVideo] = useState<File | null>(null);
+  // 교재 PDF 텍스트 추출 상태(선택 즉시 브라우저에서 추출 → 피드백)
+  const [pdfDoc, setPdfDoc] = useState<{
+    text: string;
+    pages: number;
+    charCount: number;
+  } | null>(null);
+  const [pdfStatus, setPdfStatus] = useState<
+    "" | "extracting" | "ok" | "empty" | "error"
+  >("");
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -109,8 +118,10 @@ export default function NewLecturePage() {
       ...shared(meta, prev),
     }));
   }
-  function pickPdf(f: File | null) {
+  async function pickPdf(f: File | null) {
     setPdf(f);
+    setPdfDoc(null);
+    setPdfStatus("");
     if (!f) return;
     const meta = parseLectureMeta(f.name);
     setForm((prev) => ({
@@ -118,6 +129,20 @@ export default function NewLecturePage() {
       bookTitle: meta.title || baseName(f.name), // PDF → 교재명
       ...shared(meta, prev),
     }));
+    // 선택 즉시 브라우저에서 텍스트 추출 시도(성공/실패를 바로 표시)
+    setPdfStatus("extracting");
+    try {
+      const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
+      const doc = await extractPdfTextClient(f);
+      if (doc.text.trim()) {
+        setPdfDoc(doc);
+        setPdfStatus("ok");
+      } else {
+        setPdfStatus("empty");
+      }
+    } catch {
+      setPdfStatus("error");
+    }
   }
   function pickVideo(f: File | null) {
     setVideo(f);
@@ -249,9 +274,17 @@ export default function NewLecturePage() {
         const f = new File([subtitleText], "붙여넣기.txt", { type: "text/plain" });
         await uploadAsset(lecture.id, "SUBTITLE", f);
       }
-      // 교재 PDF: 교재명으로 저장(없으면 파일명), 추출은 견고하게 폴백 처리
+      // 교재 PDF: 선택 때 추출해 둔 텍스트 우선, 없으면 폴백(서버 추출/메타)
       if (pdf) {
-        await uploadPdf(lecture.id, pdf, form.bookTitle.trim() || pdf.name);
+        const name = form.bookTitle.trim() || pdf.name;
+        if (pdfDoc && pdfDoc.text.trim()) {
+          await uploadAssetJson(lecture.id, "PDF", name, pdfDoc.text, {
+            pages: pdfDoc.pages,
+            charCount: pdfDoc.charCount,
+          });
+        } else {
+          await uploadPdf(lecture.id, pdf, name);
+        }
       }
       // 영상: 파일 업로드 없이 메타데이터만 저장(대용량 업로드 방지)
       if (video) {
@@ -314,6 +347,26 @@ export default function NewLecturePage() {
             file={pdf}
             onPick={pickPdf}
           />
+          {pdfStatus === "extracting" && (
+            <p className="text-xs text-slate-400">교재 텍스트 추출 중…</p>
+          )}
+          {pdfStatus === "ok" && pdfDoc && (
+            <p className="text-xs text-green-600">
+              ✅ 교재 텍스트 {pdfDoc.charCount.toLocaleString()}자 추출됨 (
+              {pdfDoc.pages}p)
+            </p>
+          )}
+          {pdfStatus === "empty" && (
+            <p className="text-xs text-amber-600">
+              ⚠️ 텍스트를 찾지 못했습니다. 스캔(이미지) PDF는 분석에 쓸 수 없어요. 텍스트가
+              선택·복사되는 PDF를 올려주세요.
+            </p>
+          )}
+          {pdfStatus === "error" && (
+            <p className="text-xs text-amber-600">
+              ⚠️ 추출 실패 — 등록 시 서버에서 다시 시도합니다(대용량은 실패할 수 있음).
+            </p>
+          )}
           <UploadBox
             label="영상 파일 (선택)"
             hint="메타데이터만 저장 — 파일명 자동 인식용"
