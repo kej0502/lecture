@@ -18,12 +18,20 @@ export class MockAnalyzer implements LectureAnalyzer {
     });
     const scores = [...teaching, ...content];
 
-    const tAvg = categoryAverage(scores, "TEACHING");
-    const cAvg = categoryAverage(scores, "CONTENT");
-
-    const summary =
-      `${CATEGORY_LABEL.TEACHING} ${tAvg}점 · ${CATEGORY_LABEL.CONTENT} ${cAvg}점. ` +
-      `8개 항목을 자막${input.pdf ? "·교재" : ""} 기반으로 자동 채점했습니다.`;
+    const parts: string[] = [];
+    if (teaching.length > 0) {
+      parts.push(
+        `${CATEGORY_LABEL.TEACHING} ${categoryAverage(scores, "TEACHING")}점`,
+      );
+    }
+    if (content.length > 0) {
+      parts.push(
+        `${CATEGORY_LABEL.CONTENT} ${categoryAverage(scores, "CONTENT")}점`,
+      );
+    }
+    const hasSub = input.subtitle.text.trim() !== "";
+    const source = hasSub ? (input.pdf ? "자막·교재" : "자막") : "교재";
+    const summary = `${parts.join(" · ")}. ${scores.length}개 항목을 ${source} 기반으로 자동 채점했습니다.`;
 
     return { scores, summary, provider: this.provider };
   }
