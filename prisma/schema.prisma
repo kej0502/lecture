@@ -48,6 +48,7 @@ model Evaluation {
   id            String   @id @default(cuid())
   lectureId     String
   type          String // AI | HUMAN
+  provider      String? // 분석 방식: mock(기본 지표) | claude | gemini
   evaluatorName String?
   summary       String?
   createdAt     DateTime @default(now())

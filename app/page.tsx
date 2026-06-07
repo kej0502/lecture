@@ -7,6 +7,7 @@ import { ScoreBadge } from "@/components/ui";
 import { AREAS } from "@/lib/areas";
 import { api } from "@/lib/client";
 import type { Aggregate } from "@/lib/report";
+import { providerLabel } from "@/lib/report-view";
 
 interface LectureListItem {
   id: string;
@@ -19,6 +20,7 @@ interface LectureListItem {
   evaluationCount: number;
   evaluatorName: string | null;
   evaluatedAt: string | null;
+  aiProvider: string | null;
   ai: Aggregate | null;
 }
 
@@ -179,6 +181,7 @@ export default function DashboardPage() {
                 <th className="px-4 py-3 font-medium">강사명</th>
                 <th className="px-4 py-3 font-medium">강의명</th>
                 <th className="px-4 py-3 font-medium">평가자</th>
+                <th className="px-4 py-3 font-medium">분석 방식</th>
                 <th className="px-4 py-3 font-medium">날짜</th>
                 <th className="px-4 py-3 text-right font-medium">총점</th>
                 <th className="px-4 py-3 font-medium"></th>
@@ -196,6 +199,21 @@ export default function DashboardPage() {
                   <td className="px-4 py-3">{l.instructor ?? "-"}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{l.title}</td>
                   <td className="px-4 py-3">{l.evaluatorName ?? "-"}</td>
+                  <td className="px-4 py-3">
+                    {l.ai ? (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          l.aiProvider === "claude" || l.aiProvider === "gemini"
+                            ? "bg-indigo-100 text-indigo-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {providerLabel(l.aiProvider)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-500">
                     {l.evaluatedAt
                       ? new Date(l.evaluatedAt).toLocaleDateString("ko-KR")

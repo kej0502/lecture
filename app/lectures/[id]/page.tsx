@@ -6,7 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import { CombinedReport } from "@/components/CombinedReport";
 import { Card, ScoreBadge } from "@/components/ui";
 import { api } from "@/lib/client";
-import { type EvalLite, evalAggregate, latestOf } from "@/lib/report-view";
+import {
+  type EvalLite,
+  evalAggregate,
+  latestOf,
+  providerLabel,
+} from "@/lib/report-view";
 import type { LectureDTO } from "@/lib/types";
 
 const KIND_LABEL: Record<string, string> = {
@@ -300,6 +305,20 @@ export default function LectureDetailPage() {
       </Card>
 
       {/* 리포트 */}
+      {aiEv && (
+        <p className="text-sm text-slate-500">
+          최근 분석 방식:{" "}
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              aiEv.provider === "claude" || aiEv.provider === "gemini"
+                ? "bg-indigo-100 text-indigo-700"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {providerLabel(aiEv.provider)}
+          </span>
+        </p>
+      )}
       {aiEv && <CombinedReport ev={aiEv} />}
 
       {/* 평가 이력 */}
@@ -323,6 +342,15 @@ export default function LectureDetailPage() {
                 >
                   <div className="text-sm">
                     <span className="font-medium">{ev.evaluatorName ?? "익명"}</span>
+                    <span
+                      className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                        ev.provider === "claude" || ev.provider === "gemini"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {providerLabel(ev.provider)}
+                    </span>
                     <span className="ml-2 text-xs text-slate-400">
                       {new Date(ev.createdAt).toLocaleString("ko-KR")}
                     </span>

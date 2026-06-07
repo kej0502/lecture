@@ -21,10 +21,23 @@ export interface ScoreRow {
 export interface EvalLite {
   id: string;
   type: string; // AI
+  provider?: string | null; // mock | claude | gemini
   evaluatorName?: string | null;
   summary?: string | null;
   createdAt: string | Date;
   scores: ScoreRow[];
+}
+
+// 분석 방식 표시 라벨. (레거시 provider 없음 → 기본 분석으로 표기)
+export function providerLabel(p?: string | null): string {
+  switch ((p ?? "").toLowerCase()) {
+    case "claude":
+      return "Claude (LLM)";
+    case "gemini":
+      return "Gemini (LLM)";
+    default:
+      return "기본 분석";
+  }
 }
 
 export function latestOf(evals: EvalLite[], type = "AI"): EvalLite | null {

@@ -44,6 +44,7 @@ export async function GET(req: Request) {
         select: {
           evaluatorName: true,
           createdAt: true,
+          provider: true,
           scores: { select: { category: true, dimension: true, value: true } },
         },
       },
@@ -73,6 +74,7 @@ export async function GET(req: Request) {
       evaluationCount: l._count.evaluations,
       evaluatorName: latestEval?.evaluatorName ?? null,
       evaluatedAt: latestEval?.createdAt ?? null,
+      aiProvider: latestEval?.provider ?? null,
       ai,
     };
   });

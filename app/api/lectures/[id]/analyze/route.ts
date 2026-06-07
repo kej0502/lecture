@@ -121,6 +121,7 @@ export async function POST(
     data: {
       lectureId: id,
       type: "AI",
+      provider: result.provider, // mock | claude | gemini
       evaluatorName,
       summary: result.summary,
       scores: {

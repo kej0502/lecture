@@ -22,6 +22,7 @@ export interface ScoreDTO {
 export interface EvaluationDTO {
   id: string;
   type: string;
+  provider: string | null; // mock | claude | gemini
   evaluatorName: string | null;
   summary: string | null;
   createdAt: string;
