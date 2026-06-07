@@ -15,8 +15,8 @@ export interface ScoreLite {
 }
 
 export interface Aggregate {
-  teaching: number;
-  content: number;
+  teaching: number | null; // 해당 카테고리 점수가 없으면 null(예: 교재만 분석 시 강의력)
+  content: number | null;
   total: number;
   grade: string;
   gradeLabel: string;
@@ -24,8 +24,10 @@ export interface Aggregate {
 }
 
 export function aggregate(scores: ScoreLite[]): Aggregate {
-  const teaching = categoryAverage(scores, "TEACHING");
-  const content = categoryAverage(scores, "CONTENT");
+  const hasT = scores.some((s) => s.category === "TEACHING");
+  const hasC = scores.some((s) => s.category === "CONTENT");
+  const teaching = hasT ? categoryAverage(scores, "TEACHING") : null;
+  const content = hasC ? categoryAverage(scores, "CONTENT") : null;
   const total = Math.round(weightedTotal(scores));
   const band = toBand(total);
   return {

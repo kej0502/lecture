@@ -66,8 +66,13 @@ export async function POST(
   }
 
   if (subtitle.text.trim() === "" && pdf == null) {
+    const hasPdfAsset = lecture.assets.some((a) => a.kind === "PDF");
     return NextResponse.json(
-      { error: "분석할 자막/스크립트나 교재가 없습니다. 자료를 먼저 업로드하세요." },
+      {
+        error: hasPdfAsset
+          ? "교재 PDF에서 텍스트를 추출하지 못해 분석할 내용이 없습니다. (스캔 이미지 PDF는 분석할 수 없습니다 — 텍스트가 들어있는 PDF를 올려주세요)"
+          : "분석할 자막/스크립트나 교재가 없습니다. 자료를 먼저 업로드하세요.",
+      },
       { status: 422 },
     );
   }

@@ -76,11 +76,15 @@ export async function lectureToPdf(l: LectureForPdf): Promise<Buffer> {
         <View style={styles.totalsRow}>
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>강의력</Text>
-            <Text style={styles.totalValue}>{agg ? `${agg.teaching}점` : "-"}</Text>
+            <Text style={styles.totalValue}>
+              {agg?.teaching != null ? `${agg.teaching}점` : "-"}
+            </Text>
           </View>
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>콘텐츠</Text>
-            <Text style={styles.totalValue}>{agg ? `${agg.content}점` : "-"}</Text>
+            <Text style={styles.totalValue}>
+              {agg?.content != null ? `${agg.content}점` : "-"}
+            </Text>
           </View>
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>총점 / 등급</Text>

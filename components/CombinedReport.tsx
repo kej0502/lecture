@@ -29,6 +29,7 @@ export function CombinedReport({ ev }: { ev: EvalLite | null }) {
 
       {categories.map((cat) => {
         const catRows = rows.filter((r) => r.def.category === cat);
+        if (catRows.length === 0) return null; // 점수 없는 카테고리(예: 교재만일 때 강의력) 숨김
         const catAvg = cat === "TEACHING" ? agg?.teaching : agg?.content;
         return (
           <div key={cat} className="space-y-3">

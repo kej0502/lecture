@@ -224,23 +224,25 @@ export const DIFFICULTY_TARGET_INDEX: Record<string, number> = {
 export function weightedTotal(
   scores: { category: Category; dimension: Dimension; value: number }[],
 ): number {
-  const catScore = (cat: Category) => {
+  // 점수가 있는 카테고리만으로 가중 총점을 재정규화(교재만 분석 시 강의력 없이 콘텐츠로만).
+  let sum = 0;
+  let wsum = 0;
+  for (const cat of ["TEACHING", "CONTENT"] as Category[]) {
     const defs = dimensionsByCategory(cat);
-    let sum = 0;
-    let wsum = 0;
+    let cs = 0;
+    let cw = 0;
     for (const def of defs) {
       const s = scores.find((x) => x.dimension === def.dimension);
       if (s == null) continue;
-      sum += s.value * def.weight;
-      wsum += def.weight;
+      cs += s.value * def.weight;
+      cw += def.weight;
     }
-    return wsum > 0 ? sum / wsum : 0;
-  };
-  const teaching = catScore("TEACHING");
-  const content = catScore("CONTENT");
-  return (
-    teaching * CATEGORY_WEIGHT.TEACHING + content * CATEGORY_WEIGHT.CONTENT
-  );
+    if (cw > 0) {
+      sum += (cs / cw) * CATEGORY_WEIGHT[cat];
+      wsum += CATEGORY_WEIGHT[cat];
+    }
+  }
+  return wsum > 0 ? sum / wsum : 0;
 }
 
 export function categoryAverage(

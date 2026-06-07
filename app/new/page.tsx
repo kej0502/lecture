@@ -204,8 +204,10 @@ export default function NewLecturePage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!form.title.trim()) {
-      setError("강의명을 입력하세요.");
+    // 강의명 또는 교재명 중 하나는 필수(교재만 분석 시 교재명 필수). 강의명 없으면 교재명을 강의 제목으로 사용.
+    const lectureTitle = form.title.trim() || form.bookTitle.trim();
+    if (!lectureTitle) {
+      setError("강의명 또는 교재명을 입력하세요.");
       return;
     }
     if (!form.area) {
@@ -227,7 +229,7 @@ export default function NewLecturePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: form.title,
+          title: lectureTitle, // 강의명 없으면 교재명 사용
           subject: form.area, // 영역을 과목으로 저장
           instructor: form.instructor || null,
           platform: form.platform || null,
@@ -325,7 +327,7 @@ export default function NewLecturePage() {
         <Card className="space-y-4">
           <h2 className="text-lg font-semibold">📝 2. 강의 정보</h2>
           <div>
-            <label className={labelCls}>강의명 *</label>
+            <label className={labelCls}>강의명</label>
             <input
               className={inputCls}
               value={form.title}
@@ -334,13 +336,17 @@ export default function NewLecturePage() {
             />
           </div>
           <div>
-            <label className={labelCls}>교재명 (선택)</label>
+            <label className={labelCls}>교재명</label>
             <input
               className={inputCls}
               value={form.bookTitle}
               onChange={(e) => set("bookTitle", e.target.value)}
               placeholder="예: 수학Ⅰ 개념원리 (교재 PDF 파일명에서 자동)"
             />
+            <p className="mt-1 text-xs text-slate-400">
+              강의명·교재명 중 <b>최소 하나</b>는 필요합니다. (교재만 분석할 땐 교재명만
+              있어도 됩니다)
+            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>

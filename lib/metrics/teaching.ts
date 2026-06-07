@@ -42,6 +42,8 @@ export function analyzeTeaching(
   sub: SubtitleDoc,
   runningTimeSec?: number | null,
 ): DimensionScore[] {
+  // 자막/스크립트가 없으면 강의력(전달·참여·속도·태도)은 평가 불가 → 항목 제외(교재만 분석).
+  if (!sub.text.trim() && sub.segments.length === 0) return [];
   const text = sub.text;
   const syllables = countSyllables(text);
   const tokens = tokenize(text);
