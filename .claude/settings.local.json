@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl.exe -s -X POST \"https://project-27wlk.vercel.app/api/lectures\" -H \"Content-Type: application/json\" --data '{\"title\":\"NUL테스트\",\"subject\":\"수학\"}')"
+    ]
+  }
+}

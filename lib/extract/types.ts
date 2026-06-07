@@ -16,6 +16,15 @@ export interface PdfDoc {
   pages: number;
   charCount: number;
   truncated?: boolean; // 분석용으로 길이를 잘랐는지
+  garbled?: boolean; // 글꼴 인코딩 문제로 깨진 텍스트(분석 불가)
+}
+
+// 의미 있는 문자(한글·영문·숫자) 비율. 낮으면 추출이 깨진 것(커스텀 폰트 등).
+export function readableRatio(s: string): number {
+  const compact = s.replace(/\s/g, "");
+  if (compact.length === 0) return 0;
+  const meaningful = compact.match(/[가-힣a-zA-Z0-9]/g)?.length ?? 0;
+  return meaningful / compact.length;
 }
 
 // 분석에 사용할 PDF 텍스트 최대 길이(전송 본문 4.5MB 제한·분석 효율 고려).

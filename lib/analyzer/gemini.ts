@@ -66,38 +66,47 @@ export class GeminiAnalyzer implements LectureAnalyzer {
     const model = this.model ?? process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
     const { system, user } = buildPrompt(input);
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-        model,
-      )}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: user }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA,
-            temperature: 0.4,
-          },
-        }),
+    const body = JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: user }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+        temperature: 0.4,
       },
-    );
+    });
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      model,
+    )}:generateContent`;
 
-    if (!res.ok) {
+    // 과부하(503)·쿼터(429)는 잠깐 후 재시도. 최대 3회.
+    let res: Response | null = null;
+    let lastMsg = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body,
+      });
+      if (res.ok) break;
       let msg = `${res.status}`;
       try {
-        const b = await res.json();
-        msg = b?.error?.message ?? msg;
+        msg = (await res.json())?.error?.message ?? msg;
       } catch {
         /* ignore */
       }
-      throw new Error(msg);
+      lastMsg = msg;
+      const retryable = res.status === 503 || res.status === 429;
+      if (!retryable || attempt === 2) {
+        throw new Error(
+          retryable
+            ? `${msg} (잠시 후 다시 시도하거나 모델을 Flash-Lite로 바꿔보세요)`
+            : msg,
+        );
+      }
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
     }
+    if (!res || !res.ok) throw new Error(lastMsg || "Gemini 요청 실패");
 
     const data = await res.json();
     const text: string | undefined =

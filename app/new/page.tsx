@@ -89,7 +89,7 @@ export default function NewLecturePage() {
     truncated?: boolean;
   } | null>(null);
   const [pdfStatus, setPdfStatus] = useState<
-    "" | "extracting" | "ok" | "empty" | "error"
+    "" | "extracting" | "ok" | "empty" | "error" | "garbled"
   >("");
 
   function set<K extends keyof typeof form>(key: K, value: string) {
@@ -135,11 +135,13 @@ export default function NewLecturePage() {
     try {
       const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
       const doc = await extractPdfTextClient(f);
-      if (doc.text.trim()) {
+      if (!doc.text.trim()) {
+        setPdfStatus("empty");
+      } else if (doc.garbled) {
+        setPdfStatus("garbled"); // 깨진 텍스트 → 분석에 쓰지 않음
+      } else {
         setPdfDoc(doc);
         setPdfStatus("ok");
-      } else {
-        setPdfStatus("empty");
       }
     } catch {
       setPdfStatus("error");
@@ -279,7 +281,7 @@ export default function NewLecturePage() {
         const f = new File([subtitleText], "붙여넣기.txt", { type: "text/plain" });
         await uploadAsset(lecture.id, "SUBTITLE", f);
       }
-      // 교재 PDF: 선택 때 추출해 둔 텍스트 우선, 없으면 폴백(서버 추출/메타)
+      // 교재 PDF: 추출 텍스트 우선. 깨짐/빈 텍스트면 분석에 안 쓰고 파일 정보만 저장.
       if (pdf) {
         const name = form.bookTitle.trim() || pdf.name;
         if (pdfDoc && pdfDoc.text.trim()) {
@@ -287,8 +289,15 @@ export default function NewLecturePage() {
             pages: pdfDoc.pages,
             charCount: pdfDoc.charCount,
           });
+        } else if (pdfStatus === "garbled" || pdfStatus === "empty") {
+          await uploadAssetJson(lecture.id, "PDF", name, null, {
+            note:
+              pdfStatus === "garbled"
+                ? "글꼴 인코딩 문제로 텍스트가 깨져 분석 제외"
+                : "텍스트 없음(스캔 PDF)",
+          });
         } else {
-          await uploadPdf(lecture.id, pdf, name);
+          await uploadPdf(lecture.id, pdf, name); // 추출 오류 → 서버 재시도
         }
       }
       // 영상: 파일 업로드 없이 메타데이터만 저장(대용량 업로드 방지)
@@ -371,6 +380,13 @@ export default function NewLecturePage() {
             <p className="text-xs text-amber-600">
               ⚠️ 텍스트를 찾지 못했습니다. 스캔(이미지) PDF는 분석에 쓸 수 없어요. 텍스트가
               선택·복사되는 PDF를 올려주세요.
+            </p>
+          )}
+          {pdfStatus === "garbled" && (
+            <p className="text-xs text-amber-600">
+              ⚠️ 교재 텍스트가 깨져서 추출됩니다(글꼴 인코딩 문제 — 수학 교재 등에서 흔함).
+              이 PDF는 분석에 쓸 수 없어 제외됩니다. 텍스트가 정상 복사되는 PDF나 자막으로
+              분석해 주세요.
             </p>
           )}
           {pdfStatus === "error" && (
