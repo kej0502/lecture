@@ -62,7 +62,8 @@ export default function NewLecturePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    title: "",
+    title: "", // 강의명 (자막/영상 파일명에서 파싱)
+    bookTitle: "", // 교재명 (PDF 파일명에서 파싱)
     area: "",
     instructor: "",
     platform: "",
@@ -85,32 +86,48 @@ export default function NewLecturePage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // 파일명에서 플랫폼·영역·강사명·강의명 자동 채움.
-  // 새 파일을 올리면 이전에 자동 채운 4개 칸을 새 파일 기준으로 리셋·재설정한다.
-  // 구조화된 규칙 "플랫폼_영역_강사명_강의명"이면 위치 기반으로 강의명까지 분리.
-  function applyParse(filename: string) {
-    const meta = parseLectureMeta(filename);
-    const base = filename.replace(/\.[^.]+$/, "");
-    setForm((f) => ({
-      ...f,
-      title: meta.title || base,
-      area: meta.area || "",
-      platform: meta.platform || "",
-      instructor: meta.instructor || "",
-    }));
+  // 파일명에서 플랫폼·영역·강사명을 채움(이미 입력된 칸은 유지). "플랫폼_영역_강사명_이름" 규칙 인식.
+  // 자막/영상 파일명 → 강의명, 교재 PDF 파일명 → 교재명으로 각각 파싱.
+  function shared(meta: ReturnType<typeof parseLectureMeta>, prev: typeof form) {
+    return {
+      area: prev.area || meta.area || "",
+      platform: prev.platform || meta.platform || "",
+      instructor: prev.instructor || meta.instructor || "",
+    };
+  }
+  function baseName(filename: string) {
+    return filename.replace(/\.[^.]+$/, "");
   }
 
   function pickSubtitle(f: File | null) {
     setSubtitle(f);
-    if (f) applyParse(f.name);
+    if (!f) return;
+    const meta = parseLectureMeta(f.name);
+    setForm((prev) => ({
+      ...prev,
+      title: meta.title || baseName(f.name), // 자막 → 강의명
+      ...shared(meta, prev),
+    }));
   }
   function pickPdf(f: File | null) {
     setPdf(f);
-    if (f) applyParse(f.name);
+    if (!f) return;
+    const meta = parseLectureMeta(f.name);
+    setForm((prev) => ({
+      ...prev,
+      bookTitle: meta.title || baseName(f.name), // PDF → 교재명
+      ...shared(meta, prev),
+    }));
   }
   function pickVideo(f: File | null) {
     setVideo(f);
-    if (f) applyParse(f.name);
+    if (!f) return;
+    const meta = parseLectureMeta(f.name);
+    setForm((prev) => ({
+      ...prev,
+      title: prev.title || meta.title || baseName(f.name), // 영상 → 강의명(비어있을 때)
+      ...shared(meta, prev),
+    }));
   }
 
   function toggleGrade(g: string) {
@@ -150,6 +167,38 @@ export default function NewLecturePage() {
       const b = await res.json().catch(() => ({}));
       throw new Error(b.error ?? "자료 업로드 실패");
     }
+  }
+
+  // 교재 PDF: 브라우저 추출 시도 → 실패 시 서버 추출(≤4.5MB) → 그래도 안 되면 메타만 저장(등록은 계속)
+  async function uploadPdf(id: string, file: File, name: string) {
+    try {
+      const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
+      const doc = await extractPdfTextClient(file);
+      if (doc.text.trim()) {
+        await uploadAssetJson(id, "PDF", name, doc.text, {
+          pages: doc.pages,
+          charCount: doc.charCount,
+        });
+        return;
+      }
+    } catch {
+      /* 클라이언트 추출 실패 → 폴백 */
+    }
+    // 폴백: 서버에서 추출(멀티파트). Vercel 4.5MB 제한 이하만 시도.
+    if (file.size <= 4 * 1024 * 1024) {
+      const fd = new FormData();
+      fd.append("kind", "PDF");
+      fd.append("file", file, name.endsWith(".pdf") ? name : `${name}.pdf`);
+      const res = await fetch(`/api/lectures/${id}/assets`, {
+        method: "POST",
+        body: fd,
+      });
+      if (res.ok) return;
+    }
+    // 최후: 텍스트 없이 파일 정보만 저장(등록 자체는 성공시킴)
+    await uploadAssetJson(id, "PDF", name, null, {
+      note: "텍스트 추출 실패(스캔 이미지 또는 대용량 PDF일 수 있음)",
+    });
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -198,14 +247,9 @@ export default function NewLecturePage() {
         const f = new File([subtitleText], "붙여넣기.txt", { type: "text/plain" });
         await uploadAsset(lecture.id, "SUBTITLE", f);
       }
-      // 교재 PDF: 브라우저에서 텍스트 추출 후 텍스트만 전송
+      // 교재 PDF: 교재명으로 저장(없으면 파일명), 추출은 견고하게 폴백 처리
       if (pdf) {
-        const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
-        const doc = await extractPdfTextClient(pdf);
-        await uploadAssetJson(lecture.id, "PDF", pdf.name, doc.text, {
-          pages: doc.pages,
-          charCount: doc.charCount,
-        });
+        await uploadPdf(lecture.id, pdf, form.bookTitle.trim() || pdf.name);
       }
       // 영상: 파일 업로드 없이 메타데이터만 저장(대용량 업로드 방지)
       if (video) {
@@ -263,7 +307,7 @@ export default function NewLecturePage() {
           </div>
           <UploadBox
             label="교재 PDF (선택)"
-            hint=".pdf — 자료 구성·가독성 평가에 사용(없으면 해당 항목 제외)"
+            hint=".pdf — 파일명은 교재명으로 자동 입력. 자막과 함께 올리면 결합해 분석"
             accept=".pdf"
             file={pdf}
             onPick={pickPdf}
@@ -286,7 +330,16 @@ export default function NewLecturePage() {
               className={inputCls}
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="예: 지수함수와 로그함수 1강"
+              placeholder="예: 지수함수와 로그함수 1강 (자막/영상 파일명에서 자동)"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>교재명 (선택)</label>
+            <input
+              className={inputCls}
+              value={form.bookTitle}
+              onChange={(e) => set("bookTitle", e.target.value)}
+              placeholder="예: 수학Ⅰ 개념원리 (교재 PDF 파일명에서 자동)"
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
