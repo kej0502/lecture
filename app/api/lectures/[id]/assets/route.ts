@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parsePdf } from "@/lib/extract/pdf";
 import { parseSubtitle } from "@/lib/extract/srt";
+
+// pdf-parse(DOMMatrix 의존)는 모듈 로드만으로 서버리스에서 크래시 → PDF 분기에서만 지연 import.
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,7 @@ export async function POST(
 
   try {
     if (kind === "PDF") {
+      const { parsePdf } = await import("@/lib/extract/pdf");
       const buf = Buffer.from(await file.arrayBuffer());
       const doc = await parsePdf(buf);
       extractedText = doc.text;

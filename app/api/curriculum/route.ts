@@ -5,9 +5,11 @@ import {
   detectSubject,
   extractStandards,
 } from "@/lib/extract/curriculum-pdf";
-import { parsePdf } from "@/lib/extract/pdf";
 
 export const runtime = "nodejs";
+
+// pdf-parse는 브라우저 API(DOMMatrix)에 의존해 모듈 로드만으로 서버리스에서 크래시한다.
+// → 실제 PDF 업로드 분기에서만 지연 import 한다(GET/JSON/CSV 경로는 영향 없음).
 
 // 성취기준 조회 (subject/revisionYear 필터). 과목·개정 요약도 함께 반환.
 export async function GET(req: Request) {
@@ -102,6 +104,7 @@ export async function POST(req: Request) {
     let pdfText = "";
     const pdfName = file.name ?? "";
     try {
+      const { parsePdf } = await import("@/lib/extract/pdf");
       const buf = Buffer.from(await file.arrayBuffer());
       const doc = await parsePdf(buf);
       pdfText = doc.text;
