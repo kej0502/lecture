@@ -9,6 +9,7 @@ import {
   type Category,
   DELIVERY_THRESHOLDS,
   DIFFICULTY_DISTRIBUTION,
+  type Dimension,
   dimensionsByCategory,
   ENGAGEMENT_THRESHOLDS,
   PACING_THRESHOLDS,
@@ -19,6 +20,26 @@ const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 const CATEGORIES: Category[] = ["TEACHING", "CONTENT"];
 
+// 기본(지표 기반) 분석에서 각 항목이 실제로 계산되는 방식.
+const SCORING: Record<Dimension, string> = {
+  DELIVERY:
+    "설명구조(도입·정의·예시·정리 4요소 충족률) 40% + 정의 단서 횟수(5분당 2회 목표) 30% + 필러어 적음(어·음·그 등, 2%↓ 만점·8%↑ 0점) 30%.",
+  ENGAGEMENT:
+    "발문(≥3회/10분)·예시(≥1회/10분)·상호작용(≥2회/10분)·동기부여(≥2회/10분) 4개 빈도를 각 목표 대비로 환산해 평균.",
+  PACING:
+    "발화 속도(280~340음절/분)·휴지 비율(5~15%, 타임스탬프 있을 때만)·개념당 설명 시간(60~180초)이 적정 범위에 가까울수록 만점, 측정 가능한 항목들의 평균. 타임스탬프와 강의 길이가 모두 없으면 계산 불가(기본 50).",
+  PRESENTATION:
+    "필러어 적음 40% + 문장 완결성(어미로 끝나는 자막 구간 비율) 40% + 어휘 다양성(고유 단어/전체 단어) 20%. 음성 톤·발음·판서는 자막만으로 알 수 없어 제외.",
+  ACCURACY:
+    "기본 50점에서 시작 + 개념 정의 횟수(3회 만점)와 논리 연결어(그래서·따라서·즉 등, 4회 만점)로 가산. 자막 기반 간접 추정이라 사실 오류 정밀 검증은 못 함(실제 LLM 분석 권장).",
+  CURRICULUM:
+    "등록된 성취기준 중 강의 텍스트에 키워드가 등장한 비율(커버리지)을 목표 80% 대비로 환산. 해당 영역·개정의 성취기준이 등록돼 있어야 채점(없으면 기본 50).",
+  DIFFICULTY:
+    "강의 복잡도(어휘 길이 60% + 개념 밀도 40%)를 대상 등급대 기대치(상 0.70·중 0.50·하 0.35)와 비교 — 가까울수록 만점, 너무 쉽거나 어려우면 감점.",
+  READABILITY:
+    "교재 구조(목차·소제목·문항번호·해설 4요소 충족률) 70% + 페이지당 글자수(800~2000자 적정) 30%. 교재 PDF가 있을 때만 채점(없으면 이 항목 제외).",
+};
+
 export default function RubricPage() {
   return (
     <div className="space-y-5">
@@ -26,9 +47,19 @@ export default function RubricPage() {
         <h1 className="text-2xl font-bold">평가기준</h1>
         <p className="mt-1 text-sm text-slate-500">
           강의는 <b>강의력</b>과 <b>콘텐츠</b> 2개 대분류, 각 4개 항목으로 0~100점
-          채점됩니다. 각 항목은 자막·교재 텍스트에서 객관 지표를 계산해 자동 채점되며,
-          아래 가중치로 합산해 총점을 산출합니다.
+          채점됩니다. 아래 가중치로 합산해 총점을 산출합니다.
         </p>
+        <div className="mt-2 rounded-lg bg-slate-100 p-3 text-xs text-slate-600 space-y-1">
+          <p>
+            <b>총점 계산:</b> 항목 점수를 카테고리 내 가중치로 가중평균 → 강의력 평균 ×{" "}
+            {pct(CATEGORY_WEIGHT.TEACHING)} + 콘텐츠 평균 × {pct(CATEGORY_WEIGHT.CONTENT)}.
+          </p>
+          <p>
+            <b>두 가지 채점 방식:</b> (1) <b>기본(지표 기반)</b> — 키 없이 무료, 자막·교재에서
+            아래 방식대로 수치를 계산. (2) <b>AI(LLM)</b> — 본인 키 입력 시 Claude/Gemini가
+            내용을 읽고 같은 8개 항목을 채점. 아래 "채점 방식"은 기본 분석 기준입니다.
+          </p>
+        </div>
       </div>
 
       {/* 등급 밴드 */}
@@ -68,6 +99,9 @@ export default function RubricPage() {
                 </div>
                 <p className="mt-0.5 text-sm text-slate-500">{d.desc}</p>
                 <p className="mt-1 text-sm text-slate-600">{d.explain}</p>
+                <p className="mt-1.5 rounded-md bg-slate-50 px-2 py-1.5 text-xs text-slate-500">
+                  <b className="text-slate-600">채점 방식:</b> {SCORING[d.dimension]}
+                </p>
               </div>
             ))}
           </div>
