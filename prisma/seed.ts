@@ -1,5 +1,6 @@
 // 교육과정 성취기준 시드: data/curriculum.seed.json → CurriculumStandard (upsert).
 // 실행: npm run db:seed  (tsx prisma/seed.ts)
+import "dotenv/config"; // tsx는 .env를 자동 로드하지 않으므로 명시적으로 로드
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
