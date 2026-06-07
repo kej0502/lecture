@@ -99,7 +99,7 @@ export default function CurriculumPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-3xl font-bold tracking-tight">교육과정 관리</h1>
+      <h1 className="text-3xl font-bold tracking-tight">🗓️ 교육과정 관리</h1>
       <p className="text-sm text-slate-500">
         과목·개정연도별 성취기준을 등록하면 강의의 교육과정 부합도가 자동 채점됩니다. 한 번
         올리면 영구 보관·재사용되고, 같은 과목·개정연도를 다시 올리면 교체됩니다.
@@ -107,7 +107,7 @@ export default function CurriculumPage() {
 
       {/* 등록된 그룹 */}
       <Card className="space-y-3">
-        <h2 className="text-xl font-semibold">등록된 과목 · 개정</h2>
+        <h2 className="text-xl font-semibold">📚 등록된 과목 · 개정</h2>
         {data.groups.length === 0 && (
           <p className="text-sm text-slate-400">등록된 성취기준이 없습니다.</p>
         )}
@@ -177,7 +177,7 @@ export default function CurriculumPage() {
 
       {/* 업로드 — 교육과정 PDF (과목·개정연도 자동 인식) */}
       <Card className="space-y-3">
-        <h2 className="text-xl font-semibold">교육과정 PDF 업로드</h2>
+        <h2 className="text-xl font-semibold">📄 교육과정 PDF 업로드</h2>
         <p className="text-xs text-slate-400">
           PDF 안의 <code>[12수학Ⅰ-01-02] …</code> 형식 코드에서 <b>과목명·개정연도를 자동
           인식</b>하고 성취기준·키워드를 등록합니다. 별도 선택은 필요 없습니다.

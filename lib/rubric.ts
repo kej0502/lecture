@@ -30,6 +30,23 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   CONTENT: "콘텐츠",
 };
 
+// 화면 구분용 이모지(카테고리/항목). 채점 로직과 무관, 표시 전용.
+export const CATEGORY_EMOJI: Record<Category, string> = {
+  TEACHING: "🎤",
+  CONTENT: "📚",
+};
+
+export const DIMENSION_EMOJI: Record<Dimension, string> = {
+  DELIVERY: "🗣️",
+  ENGAGEMENT: "🙋",
+  PACING: "⏱️",
+  PRESENTATION: "💬",
+  ACCURACY: "✅",
+  CURRICULUM: "🎓",
+  DIFFICULTY: "📈",
+  READABILITY: "📖",
+};
+
 // 카테고리 간 가중치(전체 총점 산출용)
 export const CATEGORY_WEIGHT: Record<Category, number> = {
   TEACHING: 0.5,

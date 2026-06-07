@@ -197,7 +197,7 @@ export default function LectureDetailPage() {
 
       {/* 입력 자료 */}
       <Card className="space-y-3">
-        <h2 className="text-xl font-semibold">입력 자료</h2>
+        <h2 className="text-xl font-semibold">📎 입력 자료</h2>
         {lecture.assets.length === 0 && (
           <p className="text-sm text-slate-400">업로드된 자료가 없습니다.</p>
         )}
@@ -220,7 +220,7 @@ export default function LectureDetailPage() {
 
       {/* AI 자동 평가 실행 */}
       <Card className="space-y-3">
-        <h2 className="text-xl font-semibold">AI 자동 평가</h2>
+        <h2 className="text-xl font-semibold">🤖 AI 자동 평가</h2>
         <p className="text-sm text-slate-500">
           자막(+교재)을 분석해 8개 항목을 채점하고, 각 항목의 평가 근거(자막 구간·타임)를
           함께 제시합니다.
@@ -326,7 +326,7 @@ export default function LectureDetailPage() {
 
       {/* 평가 이력 */}
       <Card className="space-y-3">
-        <h2 className="text-xl font-semibold">평가 이력 ({evals.length})</h2>
+        <h2 className="text-xl font-semibold">🗂️ 평가 이력 ({evals.length})</h2>
         {evals.length === 0 && (
           <p className="text-sm text-slate-400">평가 이력이 없습니다.</p>
         )}

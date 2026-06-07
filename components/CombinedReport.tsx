@@ -5,7 +5,12 @@ import {
   dimensionRows,
   evalAggregate,
 } from "@/lib/report-view";
-import { CATEGORY_LABEL, type Category } from "@/lib/rubric";
+import {
+  CATEGORY_EMOJI,
+  CATEGORY_LABEL,
+  type Category,
+  DIMENSION_EMOJI,
+} from "@/lib/rubric";
 
 export function CombinedReport({ ev }: { ev: EvalLite | null }) {
   const rows = dimensionRows(ev, true);
@@ -15,7 +20,7 @@ export function CombinedReport({ ev }: { ev: EvalLite | null }) {
   return (
     <Card className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">평가 리포트</h2>
+        <h2 className="text-lg font-semibold">📋 평가 리포트</h2>
         <div className="flex items-center gap-2 text-sm text-slate-500">
           {ev?.evaluatorName && <span>평가자 {ev.evaluatorName}</span>}
           <ScoreBadge value={agg?.total} label="총점" />
@@ -28,13 +33,17 @@ export function CombinedReport({ ev }: { ev: EvalLite | null }) {
         return (
           <div key={cat} className="space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-              <h3 className="font-semibold text-slate-700">{CATEGORY_LABEL[cat]}</h3>
+              <h3 className="font-semibold text-slate-700">
+                {CATEGORY_EMOJI[cat]} {CATEGORY_LABEL[cat]}
+              </h3>
               <span className="text-xs text-slate-500">평균 {catAvg ?? "–"}점</span>
             </div>
             {catRows.map((r) => (
               <div key={r.def.dimension} className="rounded-lg border border-slate-100 p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium">{r.def.label}</span>
+                  <span className="font-medium">
+                    {DIMENSION_EMOJI[r.def.dimension]} {r.def.label}
+                  </span>
                   <span className="w-10 text-right text-sm font-semibold tabular-nums">
                     {r.value ?? "–"}
                   </span>

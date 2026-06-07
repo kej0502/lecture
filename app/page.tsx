@@ -73,7 +73,7 @@ export default function DashboardPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          강의 평가 대시보드
+          📊 강의 평가 대시보드
         </h1>
         <div className="flex gap-2">
           {lectures.length > 0 && (
