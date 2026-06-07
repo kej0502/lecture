@@ -63,9 +63,8 @@ export class GeminiAnalyzer implements LectureAnalyzer {
         "Gemini API 키가 없습니다. 화면에서 본인 키를 입력하세요. (Google AI Studio 무료 발급)",
       );
     }
-    const model = this.model ?? process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
+    const chosen = this.model ?? process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
     const { system, user } = buildPrompt(input);
-
     const body = JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
@@ -75,46 +74,66 @@ export class GeminiAnalyzer implements LectureAnalyzer {
         temperature: 0.4,
       },
     });
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      model,
-    )}:generateContent`;
 
-    // 과부하(503)·쿼터(429)는 잠깐 후 재시도. 최대 3회.
-    let res: Response | null = null;
-    let lastMsg = "";
-    for (let attempt = 0; attempt < 3; attempt++) {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body,
-      });
-      if (res.ok) break;
-      let msg = `${res.status}`;
-      try {
-        msg = (await res.json())?.error?.message ?? msg;
-      } catch {
-        /* ignore */
+    // 한 모델 호출(과부하/쿼터면 최대 3회 재시도). overloaded=true면 다른 모델로 폴백.
+    const call = async (
+      model: string,
+    ): Promise<{ text?: string; overloaded: boolean; msg: string }> => {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        model,
+      )}:generateContent`;
+      let lastMsg = "";
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const text: string | undefined =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!text) {
+            return {
+              overloaded: false,
+              msg: `Gemini 응답에 결과가 없습니다 (${data?.candidates?.[0]?.finishReason ?? "unknown"})`,
+            };
+          }
+          return { text, overloaded: false, msg: "" };
+        }
+        let msg = `${res.status}`;
+        try {
+          msg = (await res.json())?.error?.message ?? msg;
+        } catch {
+          /* ignore */
+        }
+        lastMsg = msg;
+        if (res.status !== 503 && res.status !== 429) {
+          return { overloaded: false, msg };
+        }
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        }
       }
-      lastMsg = msg;
-      const retryable = res.status === 503 || res.status === 429;
-      if (!retryable || attempt === 2) {
-        throw new Error(
-          retryable
-            ? `${msg} (잠시 후 다시 시도하거나 모델을 Flash-Lite로 바꿔보세요)`
-            : msg,
-        );
-      }
-      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-    }
-    if (!res || !res.ok) throw new Error(lastMsg || "Gemini 요청 실패");
+      return { overloaded: true, msg: lastMsg };
+    };
 
-    const data = await res.json();
-    const text: string | undefined =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      const reason = data?.candidates?.[0]?.finishReason ?? "unknown";
-      throw new Error(`Gemini 응답에 결과가 없습니다. (${reason})`);
+    // 선택 모델 → 과부하면 Flash-Lite로 자동 폴백
+    const chain = [chosen, "gemini-2.5-flash-lite"].filter(
+      (m, i, a) => a.indexOf(m) === i,
+    );
+    let lastErr = "";
+    for (const m of chain) {
+      const r = await call(m);
+      if (r.text) return finalize(JSON.parse(r.text) as RawResult, this.provider);
+      lastErr = r.msg;
+      if (!r.overloaded) throw new Error(r.msg); // 과부하가 아닌 오류는 폴백 무의미
     }
-    return finalize(JSON.parse(text) as RawResult, this.provider);
+    throw new Error(
+      `${lastErr} — Gemini 과부하가 계속됩니다. 잠시 후 다시 시도하거나 Claude 키를 사용해 주세요.`,
+    );
   }
 }
