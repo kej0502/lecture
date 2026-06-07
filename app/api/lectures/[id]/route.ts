@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // DB 깨어남 대기(504 방지)
 
 export async function GET(
   _req: Request,

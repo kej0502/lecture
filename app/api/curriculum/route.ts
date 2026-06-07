@@ -7,6 +7,7 @@ import {
 } from "@/lib/extract/curriculum-pdf";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // DB 깨어남 대기(504 방지)
 
 // pdf-parse는 브라우저 API(DOMMatrix)에 의존해 모듈 로드만으로 서버리스에서 크래시한다.
 // → 실제 PDF 업로드 분기에서만 지연 import 한다(GET/JSON/CSV 경로는 영향 없음).

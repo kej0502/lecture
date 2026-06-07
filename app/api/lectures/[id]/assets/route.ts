@@ -6,6 +6,7 @@ import { stripControlChars } from "@/lib/extract/types";
 // pdf-parse(DOMMatrix 의존)는 모듈 로드만으로 서버리스에서 크래시 → PDF 분기에서만 지연 import.
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // DB 깨어남/대용량 자료 처리 시간 확보(504 방지)
 
 // kind: SUBTITLE | PDF | VIDEO | SCRIPT
 export async function POST(

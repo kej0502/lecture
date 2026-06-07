@@ -4,6 +4,7 @@ import { aggregate, type ScoreLite } from "@/lib/report";
 import type { Category, Dimension } from "@/lib/rubric";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // Supabase 무료 DB가 일시정지에서 깨어날 시간 확보(504 방지)
 
 // 강의 목록 + 최신 AI/사람 평가 총점
 // 검색: ?instructor=<강사명>&area=<영역명> (DB에서 부분일치 필터)
