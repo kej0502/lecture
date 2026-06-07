@@ -29,6 +29,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  await prisma.lecture.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  // deleteMany는 대상이 없어도 예외 없이 count 0 반환(이미 삭제된 행 재삭제 시 500 방지).
+  const res = await prisma.lecture.deleteMany({ where: { id } });
+  return NextResponse.json({ ok: true, deleted: res.count });
 }
