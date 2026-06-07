@@ -87,7 +87,53 @@ function parseCsv(csv: string): StandardInput[] {
   return out;
 }
 
-// 성취기준 업로드(PDF 파일 / JSON standards[] / csv 문자열). 같은 (subject,revisionYear,code)는 교체.
+// PDF 텍스트에서 성취기준 추출 + 과목·개정연도 자동 인식.
+interface IngestResult {
+  error?: NextResponse;
+  subject: string;
+  revisionYear: number;
+  standards: StandardInput[];
+}
+function ingestFromPdfText(
+  pdfText: string,
+  pdfName: string,
+  overrideSubject: string,
+  overrideYear: number,
+): IngestResult {
+  const standards = extractStandards(pdfText);
+  if (standards.length === 0) {
+    return {
+      error: NextResponse.json(
+        { error: "PDF에서 성취기준 코드를 찾지 못했습니다. (예: [12수학Ⅰ-01-02] 형식이 필요)" },
+        { status: 422 },
+      ),
+      subject: "",
+      revisionYear: NaN,
+      standards,
+    };
+  }
+  const subject = overrideSubject || detectSubject(standards) || "";
+  const revisionYear = !Number.isNaN(overrideYear)
+    ? overrideYear
+    : (detectRevisionYear(pdfText, pdfName) ?? 2022);
+  if (!subject) {
+    return {
+      error: NextResponse.json(
+        { error: "PDF에서 과목명을 자동 인식하지 못했습니다." },
+        { status: 422 },
+      ),
+      subject,
+      revisionYear,
+      standards,
+    };
+  }
+  return { subject, revisionYear, standards };
+}
+
+// 성취기준 업로드. 같은 (subject,revisionYear,code)는 교체.
+// - JSON { pdfText, filename }  ← 권장: 클라이언트에서 추출한 PDF 텍스트(큰 파일 4.5MB 제한 우회)
+// - multipart file(PDF)         ← 작은 PDF 직접 업로드(서버 추출)
+// - JSON { subject, revisionYear, standards[] | csv }
 export async function POST(req: Request) {
   const contentType = req.headers.get("content-type") ?? "";
   let subject = "";
@@ -95,75 +141,69 @@ export async function POST(req: Request) {
   let standards: StandardInput[] = [];
 
   if (contentType.includes("multipart/form-data")) {
-    // PDF 업로드 → 과목·개정연도 자동 인식
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "PDF 파일이 필요합니다." }, { status: 400 });
     }
     let pdfText = "";
-    const pdfName = file.name ?? "";
     try {
       const { parsePdf } = await import("@/lib/extract/pdf");
       const buf = Buffer.from(await file.arrayBuffer());
-      const doc = await parsePdf(buf);
-      pdfText = doc.text;
-      standards = extractStandards(pdfText);
+      pdfText = (await parsePdf(buf)).text;
     } catch (e) {
       return NextResponse.json(
         { error: `PDF 분석 실패: ${(e as Error).message}` },
         { status: 422 },
       );
     }
-    if (standards.length === 0) {
-      return NextResponse.json(
-        {
-          error:
-            "PDF에서 성취기준 코드를 찾지 못했습니다. (예: [12수학Ⅰ-01-02] 형식이 필요)",
-        },
-        { status: 422 },
-      );
-    }
-    // 과목·개정연도는 PDF에서 자동 인식. (override 폼값이 실제로 있으면 우선)
-    const overrideSubject = String(form.get("subject") ?? "").trim();
     const yearRaw = form.get("revisionYear");
     const hasYear = yearRaw != null && String(yearRaw).trim() !== "";
-    const overrideYear = hasYear ? Number(yearRaw) : NaN;
-    subject = overrideSubject || detectSubject(standards) || "";
-    revisionYear = !Number.isNaN(overrideYear)
-      ? overrideYear
-      : (detectRevisionYear(pdfText, pdfName) ?? 2022);
-    if (!subject) {
-      return NextResponse.json(
-        { error: "PDF에서 과목명을 자동 인식하지 못했습니다. 과목명을 입력해 주세요." },
-        { status: 422 },
-      );
-    }
+    const r = ingestFromPdfText(
+      pdfText,
+      file.name ?? "",
+      String(form.get("subject") ?? "").trim(),
+      hasYear ? Number(yearRaw) : NaN,
+    );
+    if (r.error) return r.error;
+    ({ subject, revisionYear, standards } = r);
   } else {
     const body = await req.json();
-    subject = body?.subject ? String(body.subject) : "";
-    revisionYear = body?.revisionYear ? Number(body.revisionYear) : NaN;
-    if (!subject || Number.isNaN(revisionYear)) {
-      return NextResponse.json(
-        { error: "subject와 revisionYear는 필수입니다." },
-        { status: 400 },
+    // 클라이언트에서 추출한 PDF 텍스트(권장 경로)
+    if (typeof body.pdfText === "string" && body.pdfText.trim() !== "") {
+      const r = ingestFromPdfText(
+        body.pdfText,
+        String(body.filename ?? ""),
+        String(body.subject ?? "").trim(),
+        body.revisionYear ? Number(body.revisionYear) : NaN,
       );
-    }
-    if (typeof body.csv === "string" && body.csv.trim() !== "") {
-      standards = parseCsv(body.csv);
-    } else if (Array.isArray(body.standards)) {
-      standards = body.standards.map((s: StandardInput) => ({
-        unit: s.unit,
-        code: String(s.code),
-        statement: String(s.statement),
-        keywords: Array.isArray(s.keywords) ? s.keywords.map(String) : [],
-      }));
-    }
-    if (standards.length === 0) {
-      return NextResponse.json(
-        { error: "업로드할 성취기준이 없습니다. (PDF / JSON standards[] / csv)" },
-        { status: 400 },
-      );
+      if (r.error) return r.error;
+      ({ subject, revisionYear, standards } = r);
+    } else {
+      subject = body?.subject ? String(body.subject) : "";
+      revisionYear = body?.revisionYear ? Number(body.revisionYear) : NaN;
+      if (!subject || Number.isNaN(revisionYear)) {
+        return NextResponse.json(
+          { error: "subject와 revisionYear는 필수입니다." },
+          { status: 400 },
+        );
+      }
+      if (typeof body.csv === "string" && body.csv.trim() !== "") {
+        standards = parseCsv(body.csv);
+      } else if (Array.isArray(body.standards)) {
+        standards = body.standards.map((s: StandardInput) => ({
+          unit: s.unit,
+          code: String(s.code),
+          statement: String(s.statement),
+          keywords: Array.isArray(s.keywords) ? s.keywords.map(String) : [],
+        }));
+      }
+      if (standards.length === 0) {
+        return NextResponse.json(
+          { error: "업로드할 성취기준이 없습니다." },
+          { status: 400 },
+        );
+      }
     }
   }
 

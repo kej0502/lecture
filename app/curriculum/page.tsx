@@ -51,9 +51,19 @@ export default function CurriculumPage() {
     }
     setBusy(true);
     try {
-      const fd = new FormData();
-      fd.append("file", pdfFile); // 과목·개정연도는 PDF에서 자동 인식
-      const res = await fetch("/api/curriculum", { method: "POST", body: fd });
+      // 브라우저에서 PDF 텍스트 추출 후 텍스트만 전송 (큰 파일 업로드 제한 우회)
+      const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
+      const doc = await extractPdfTextClient(pdfFile);
+      if (!doc.text.trim()) {
+        throw new Error(
+          "PDF에서 텍스트를 추출하지 못했습니다. (스캔 이미지 PDF는 지원하지 않습니다)",
+        );
+      }
+      const res = await fetch("/api/curriculum", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfText: doc.text, filename: pdfFile.name }),
+      });
       const b = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(b.error ?? "PDF 업로드 실패");
       setMsg(

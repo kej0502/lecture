@@ -77,6 +77,7 @@ export default function NewLecturePage() {
   const [levelEtcText, setLevelEtcText] = useState(""); // 대상 등급대 기타(직접입력)
 
   const [subtitle, setSubtitle] = useState<File | null>(null);
+  const [subtitleText, setSubtitleText] = useState(""); // 자막 텍스트 직접 입력(타임스탬프 포함 가능)
   const [pdf, setPdf] = useState<File | null>(null);
   const [video, setVideo] = useState<File | null>(null);
 
@@ -132,6 +133,25 @@ export default function NewLecturePage() {
     }
   }
 
+  // 클라이언트에서 추출한 텍스트/메타만 전송 (PDF·영상 — Vercel 4.5MB 업로드 제한 우회)
+  async function uploadAssetJson(
+    id: string,
+    kind: string,
+    filename: string,
+    extractedText: string | null,
+    meta: Record<string, unknown>,
+  ) {
+    const res = await fetch(`/api/lectures/${id}/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, filename, extractedText, meta }),
+    });
+    if (!res.ok) {
+      const b = await res.json().catch(() => ({}));
+      throw new Error(b.error ?? "자료 업로드 실패");
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -171,9 +191,28 @@ export default function NewLecturePage() {
           sourceUrl: form.sourceUrl || null,
         }),
       });
-      if (subtitle) await uploadAsset(lecture.id, "SUBTITLE", subtitle);
-      if (pdf) await uploadAsset(lecture.id, "PDF", pdf);
-      if (video) await uploadAsset(lecture.id, "VIDEO", video);
+      // 자막: 파일 우선, 없으면 붙여넣은 텍스트(타임스탬프 포함 가능 → 서버가 SRT/평문 자동 판별)
+      if (subtitle) {
+        await uploadAsset(lecture.id, "SUBTITLE", subtitle);
+      } else if (subtitleText.trim()) {
+        const f = new File([subtitleText], "붙여넣기.txt", { type: "text/plain" });
+        await uploadAsset(lecture.id, "SUBTITLE", f);
+      }
+      // 교재 PDF: 브라우저에서 텍스트 추출 후 텍스트만 전송
+      if (pdf) {
+        const { extractPdfTextClient } = await import("@/lib/extract/pdf-client");
+        const doc = await extractPdfTextClient(pdf);
+        await uploadAssetJson(lecture.id, "PDF", pdf.name, doc.text, {
+          pages: doc.pages,
+          charCount: doc.charCount,
+        });
+      }
+      // 영상: 파일 업로드 없이 메타데이터만 저장(대용량 업로드 방지)
+      if (video) {
+        await uploadAssetJson(lecture.id, "VIDEO", video.name, null, {
+          sizeBytes: video.size,
+        });
+      }
       router.push(`/lectures/${lecture.id}`);
     } catch (e) {
       setError((e as Error).message);
@@ -202,6 +241,26 @@ export default function NewLecturePage() {
             file={subtitle}
             onPick={pickSubtitle}
           />
+          <div>
+            <p className="mb-1 text-sm font-medium text-slate-700">
+              또는 자막을 텍스트로 붙여넣기
+            </p>
+            <textarea
+              className={`${inputCls} h-32 font-mono ${
+                subtitle ? "bg-slate-100 text-slate-400" : ""
+              }`}
+              placeholder={
+                "타임스탬프가 있으면 그대로 붙여넣으세요(자동 인식).\n예)\n00:00:01,000 --> 00:00:04,000\n오늘은 삼차방정식을 배웁니다.\n\n타임스탬프 없는 평문도 가능합니다."
+              }
+              value={subtitleText}
+              onChange={(e) => setSubtitleText(e.target.value)}
+              disabled={!!subtitle}
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              자막 파일을 올리면 이 텍스트는 무시됩니다. SRT/VTT 타임스탬프(
+              <code>00:00:01,000 --&gt; 00:00:04,000</code>) 형식을 자동 인식합니다.
+            </p>
+          </div>
           <UploadBox
             label="교재 PDF (선택)"
             hint=".pdf — 자료 구성·가독성 평가에 사용(없으면 해당 항목 제외)"

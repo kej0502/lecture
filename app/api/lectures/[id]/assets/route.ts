@@ -17,6 +17,26 @@ export async function POST(
     return NextResponse.json({ error: "강의를 찾을 수 없습니다." }, { status: 404 });
   }
 
+  // 클라이언트에서 이미 추출한 텍스트 저장(주로 PDF) — Vercel 4.5MB 업로드 제한 우회.
+  const contentType = req.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const body = await req.json();
+    const kind = String(body.kind ?? "");
+    if (!["SUBTITLE", "PDF", "VIDEO", "SCRIPT"].includes(kind)) {
+      return NextResponse.json({ error: "kind가 올바르지 않습니다." }, { status: 400 });
+    }
+    const asset = await prisma.asset.create({
+      data: {
+        lectureId: id,
+        kind,
+        filename: String(body.filename ?? "uploaded"),
+        extractedText: body.extractedText ? String(body.extractedText) : null,
+        meta: JSON.stringify(body.meta ?? {}),
+      },
+    });
+    return NextResponse.json(asset, { status: 201 });
+  }
+
   const form = await req.formData();
   const kind = String(form.get("kind") ?? "");
   const file = form.get("file");
