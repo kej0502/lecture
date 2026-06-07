@@ -91,6 +91,35 @@ export default function NewLecturePage() {
   const [pdfStatus, setPdfStatus] = useState<
     "" | "extracting" | "ok" | "empty" | "error" | "garbled"
   >("");
+  const [ocrStatus, setOcrStatus] = useState<"" | "running" | "error">("");
+  const [ocrProg, setOcrProg] = useState({ i: 0, n: 0 });
+  const [ocrPages, setOcrPages] = useState("10");
+
+  async function runOcr() {
+    if (!pdf) return;
+    setOcrStatus("running");
+    setOcrProg({ i: 0, n: 0 });
+    try {
+      const { ocrPdfClient } = await import("@/lib/extract/ocr-client");
+      const doc = await ocrPdfClient(pdf, Number(ocrPages) || 10, (i, n) =>
+        setOcrProg({ i, n }),
+      );
+      if (doc.text.trim()) {
+        setPdfDoc({
+          text: doc.text,
+          pages: doc.pages,
+          charCount: doc.charCount,
+          truncated: doc.truncated,
+        });
+        setPdfStatus("ok");
+        setOcrStatus("");
+      } else {
+        setOcrStatus("error");
+      }
+    } catch {
+      setOcrStatus("error");
+    }
+  }
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -393,6 +422,45 @@ export default function NewLecturePage() {
             <p className="text-xs text-amber-600">
               ⚠️ 추출 실패 — 등록 시 서버에서 다시 시도합니다(대용량은 실패할 수 있음).
             </p>
+          )}
+
+          {/* OCR: 깨지거나 스캔된 PDF에서 글자 인식(브라우저에서 무료 실행) */}
+          {pdf && (
+            <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-slate-500">
+                  텍스트가 깨지거나 스캔 PDF면 OCR로 인식:
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={ocrPages}
+                  onChange={(e) => setOcrPages(e.target.value)}
+                  className="w-16 rounded border border-slate-300 px-2 py-1"
+                />
+                <span className="text-slate-400">페이지까지</span>
+                <button
+                  type="button"
+                  onClick={runOcr}
+                  disabled={ocrStatus === "running"}
+                  className="rounded-md bg-slate-900 px-3 py-1 text-white disabled:opacity-50"
+                >
+                  {ocrStatus === "running"
+                    ? `OCR 인식 중 ${ocrProg.i}/${ocrProg.n}…`
+                    : "OCR로 텍스트 인식"}
+                </button>
+              </div>
+              {ocrStatus === "error" && (
+                <p className="text-xs text-amber-600">
+                  OCR 인식에 실패했습니다. 페이지 수를 줄여 다시 시도해 보세요.
+                </p>
+              )}
+              <p className="text-xs text-slate-400">
+                브라우저에서 페이지를 이미지로 변환해 글자를 인식합니다. 페이지가 많으면
+                수십 초~수 분 걸릴 수 있어요. (한국어+영문)
+              </p>
+            </div>
           )}
           <UploadBox
             label="영상 파일 (선택)"
