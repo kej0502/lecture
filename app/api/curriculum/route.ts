@@ -124,9 +124,11 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
-    // 사용자가 override를 보냈으면 우선, 아니면 자동 인식
+    // 과목·개정연도는 PDF에서 자동 인식. (override 폼값이 실제로 있으면 우선)
     const overrideSubject = String(form.get("subject") ?? "").trim();
-    const overrideYear = Number(form.get("revisionYear"));
+    const yearRaw = form.get("revisionYear");
+    const hasYear = yearRaw != null && String(yearRaw).trim() !== "";
+    const overrideYear = hasYear ? Number(yearRaw) : NaN;
     subject = overrideSubject || detectSubject(standards) || "";
     revisionYear = !Number.isNaN(overrideYear)
       ? overrideYear
