@@ -30,6 +30,8 @@ export default function DashboardPage() {
   const [instructor, setInstructor] = useState("");
   const [area, setArea] = useState("");
 
+  const CACHE_KEY = "dashboard_cache";
+
   function load(filters?: { instructor?: string; area?: string }) {
     const params = new URLSearchParams();
     const ins = filters?.instructor ?? instructor;
@@ -40,10 +42,33 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     api<LectureListItem[]>(`/api/lectures${qs ? `?${qs}` : ""}`)
-      .then(setLectures)
+      .then((data) => {
+        setLectures(data);
+        // 검색 필터 없는 기본 목록만 캐시(재방문 시 즉시 표시)
+        if (!ins.trim() && !ar.trim()) {
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          } catch {
+            /* ignore */
+          }
+        }
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }
+
+  // 마운트 시 캐시된 목록을 즉시 표시(스피너 없이) → 뒤에서 최신으로 갱신
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        setLectures(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // 영역 변경 시 즉시 검색, 강사명은 입력 디바운스(300ms)
   useEffect(() => {
@@ -114,7 +139,12 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {loading && <p className="text-slate-500">불러오는 중…</p>}
+      {loading && lectures.length === 0 && (
+        <p className="text-slate-500">불러오는 중…</p>
+      )}
+      {loading && lectures.length > 0 && (
+        <p className="text-xs text-slate-400">갱신 중…</p>
+      )}
       {error && <p className="text-red-600">{error}</p>}
 
       {!loading && lectures.length === 0 && (instructor || area) && (
