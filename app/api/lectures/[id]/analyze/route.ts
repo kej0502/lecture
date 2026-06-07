@@ -7,6 +7,7 @@ import type { StandardLite } from "@/lib/metrics/content";
 import { DIMENSION_MAP } from "@/lib/rubric";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // 실제 AI(claude) 호출은 시간이 걸릴 수 있어 상한을 늘림
 
 export async function POST(
   req: Request,
@@ -97,7 +98,15 @@ export async function POST(
   };
 
   const analyzer = getAnalyzer();
-  const result = await analyzer.analyze(input);
+  let result;
+  try {
+    result = await analyzer.analyze(input);
+  } catch (e) {
+    return NextResponse.json(
+      { error: `AI 분석 실패(${analyzer.provider}): ${(e as Error).message}` },
+      { status: 502 },
+    );
+  }
 
   // Evaluation(AI) + Score 저장 (value가 있는 자동 항목만)
   const evaluation = await prisma.evaluation.create({
